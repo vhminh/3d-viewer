@@ -3,6 +3,7 @@
 #include <sstream>
 #include <GLES3/gl3.h>
 #include <GLFW/glfw3.h>
+#include "util/error.h"
 
 GLuint createProgram(const char* vertex_shader_file, const char* fragment_shader_file);
 GLuint createShader(GLuint type, const char* source_file);
@@ -32,14 +33,8 @@ int main() {
 
     // Make shader program
     GLuint program_id;
-    try {
-        program_id = createProgram("shader/simple.vert", "shader/simple.frag");
-        glUseProgram(program_id);
-    }
-    catch (std::string &msg) {
-        std::cerr << msg << std::endl;
-        return EXIT_FAILURE;
-    }
+    program_id = createProgram("shader/simple.vert", "shader/simple.frag");
+    glUseProgram(program_id);
 
     // Vertex array
     float vertices[] = {
@@ -84,7 +79,7 @@ void on_framebuffer_resize(GLFWwindow* window, int new_width, int new_height) {
 GLuint createShader(GLuint type, const char* source_file) {
     std::ifstream fin(source_file);
     if (!fin.is_open()) {
-        throw std::string("Cannot open file ") + source_file;
+        throw FileNotFoundException(source_file);
     }
     std::string line;
     std::string file_content;
@@ -100,9 +95,7 @@ GLuint createShader(GLuint type, const char* source_file) {
     if (!success) {
         char err_msg[512];
         glGetShaderInfoLog(shader_id, 512, NULL, err_msg);
-        std::stringstream err_msg_stream;
-        err_msg_stream << "Err compile shader file \"" << source_file << "\": " << err_msg;
-        throw err_msg_stream.str();
+        throw ShaderCompilationException(std::string("Error compile shader from source file \"") + source_file + "\": " + err_msg);
     }
     return shader_id;
 }
@@ -119,8 +112,7 @@ GLuint createProgram(const char* vertex_shader_file, const char* fragment_shader
     if (!success) {
         char err_msg[512];
         glGetProgramInfoLog(program_id, 512, NULL, err_msg);
-        std::stringstream err_msg_stream;
-        throw std::string("Err link program");
+        throw ProgramLinkageException(std::string("Error link program: ") + err_msg);
     }
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
