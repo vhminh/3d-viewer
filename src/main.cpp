@@ -15,6 +15,7 @@ int main() {
         prev_time = current_time;
 
         app.process_input(time_elapsed);
+        app.update(time_elapsed);
         app.clear();
         app.render();
         app.poll_event();

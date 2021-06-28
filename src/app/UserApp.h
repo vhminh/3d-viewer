@@ -21,4 +21,6 @@ private:
     unsigned vert_arr_id;
     glm::vec3 cam_pos;
     glm::vec3 cam_center;
+
+    double update_fps_countdown = 1.0;
 };

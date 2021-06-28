@@ -116,7 +116,13 @@ void UserApp::process_input(float dt) {
 }
 
 void UserApp::update(float dt) {
-
+    update_fps_countdown -= dt;
+    if (update_fps_countdown < 0.0) {
+        float fps = 1.0 / dt;
+        std::string str_fps = std::string("FPS: ") + std::to_string(fps);
+        glfwSetWindowTitle(window, str_fps.c_str());
+        update_fps_countdown = 1.0;
+    }
 }
 
 void UserApp::render() const {
