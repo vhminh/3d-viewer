@@ -8,7 +8,7 @@
 
 UserApp::UserApp(const std::string& title, int width, int height)
     : App(title, width, height),
-    camera(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, -1.0f)) {
+    camera(window, glm::vec3(0.0f, 0.0f, 1.0f), 0.0, 0.0) {
 
     // init shader
     ShaderProgram tmp("shader/simple.vert", "shader/simple.frag");
@@ -92,7 +92,7 @@ void UserApp::process_input(float dt) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
-    camera.process_input(window, dt);
+    camera.process_input(dt);
 }
 
 void UserApp::update(float dt) {
