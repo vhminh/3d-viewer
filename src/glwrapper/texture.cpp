@@ -2,6 +2,10 @@
 #include "stb_image.h"
 #include "../util/error.h"
 
+Texture::Texture() {
+    id = GLObject::ID_NONE;
+}
+
 Texture::Texture(const std::string &path, int wrap_s, int wrap_t, int min_filter, int mag_filter) {
     // texture wrap
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
@@ -22,6 +26,11 @@ Texture::Texture(const std::string &path, int wrap_s, int wrap_t, int min_filter
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(data);
+}
+
+void Texture::move_from(Texture& another) {
+    id = another.id;
+    another.id = GLObject::ID_NONE;
 }
 
 Texture::~Texture() {

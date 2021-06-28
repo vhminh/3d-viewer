@@ -8,7 +8,7 @@
 
 UserApp::UserApp(const std::string& title, int width, int height)
     : App(title, width, height),
-    camera(window, glm::vec3(0.0f, 0.0f, 1.0f), 0.0, 0.0) {
+    camera(window, glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0) {
 
     // init shader
     ShaderProgram tmp("shader/simple.vert", "shader/simple.frag");
@@ -18,7 +18,7 @@ UserApp::UserApp(const std::string& title, int width, int height)
     cam_pos = glm::vec3(0.0f, 0.0f, 1.0f);
     cam_center = glm::vec3(0.0, 0.0, 0.0);
 
-    // vertex array
+    // cube
     float vertices[] = {
         // vert           // texture
         -0.5, -0.5,  0.5, 0.0, 0.0, // front
@@ -69,8 +69,7 @@ UserApp::UserApp(const std::string& title, int width, int height)
          0.5, -0.5, -0.5, 1.0, 0.0,
          0.5, -0.5,  0.5, 0.0, 0.0,
     };
-    glGenVertexArrays(1, &vert_arr_id);
-    glBindVertexArray(vert_arr_id);
+    glBindVertexArray(cube.get_id());
     GLuint vbo;
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -78,12 +77,33 @@ UserApp::UserApp(const std::string& title, int width, int height)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
 
-    // create texture
-    Texture duck("res/duck.jpg");
+    Texture duck_tex("res/duck.jpg");
+    duck.move_from(duck_tex);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
-    glBindTexture(GL_TEXTURE_2D, duck.get_id());
-    glActiveTexture(GL_TEXTURE0);
-    glUniform1i(glGetUniformLocation(shader_program.get_id(), "tex"), 0);
+    // ground
+    float ground_vertices[] = {
+        // vert             // texture
+        -10.0,  0.0,  10.0,  0.0,  0.0,
+        -10.0,  0.0, -10.0,  0.0, 10.0,
+         10.0,  0.0, -10.0, 10.0, 10.0,
+
+         10.0,  0.0, -10.0, 10.0, 10.0,
+         10.0,  0.0,  10.0, 10.0,  0.0,
+        -10.0,  0.0,  10.0,  0.0,  0.0,
+    };
+    glBindVertexArray(ground.get_id());
+
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(ground_vertices), ground_vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+    
+    Texture grass_tex("res/grass.png");
+    grass.move_from(grass_tex);
+
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 }
@@ -101,8 +121,9 @@ void UserApp::update(float dt) {
 
 void UserApp::render() const {
 
-    // set matrix to uniform
+    // ------ draw cube
     glm::mat4 model_mat = glm::mat4(1.0);
+    model_mat = glm::translate(model_mat, glm::vec3(0.0, 1.0, 0.0));
     model_mat = glm::rotate(model_mat, glm::radians(float(sin(glfwGetTime() + 1) * 90.0f)), glm::vec3(1.0f, 0.0f, 0.0f));
     GLint loc = glGetUniformLocation(shader_program.get_id(), "model_mat");
     glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model_mat));
@@ -114,9 +135,24 @@ void UserApp::render() const {
     loc = glGetUniformLocation(shader_program.get_id(), "projection_mat");
     glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(projection_mat));
 
-    // draw 
-    glBindVertexArray(vert_arr_id);
+    glBindVertexArray(cube.get_id());
+    glBindTexture(GL_TEXTURE_2D, duck.get_id());
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(glGetUniformLocation(shader_program.get_id(), "tex"), 0);
     glDrawArrays(GL_TRIANGLES, 0, 3 * 2 * 6);
+
+    // ------ draw ground
+    model_mat = glm::mat4(1.0);
+    loc = glGetUniformLocation(shader_program.get_id(), "model_mat");
+    glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model_mat));
+
+    glBindVertexArray(ground.get_id());
+    glBindTexture(GL_TEXTURE_2D, grass.get_id());
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(glGetUniformLocation(shader_program.get_id(), "tex"), 0);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    // ------ swap buffer
     glfwSwapBuffers(window);
     glBindVertexArray(0);
 }
