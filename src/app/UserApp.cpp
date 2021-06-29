@@ -142,8 +142,8 @@ void UserApp::render() const {
     glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(projection_mat));
 
     glBindVertexArray(cube.get_id());
-    glBindTexture(GL_TEXTURE_2D, duck.get_id());
     glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, duck.get_id());
     glUniform1i(glGetUniformLocation(shader_program.get_id(), "tex"), 0);
     glDrawArrays(GL_TRIANGLES, 0, 3 * 2 * 6);
 
@@ -153,12 +153,13 @@ void UserApp::render() const {
     glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model_mat));
 
     glBindVertexArray(ground.get_id());
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, grass.get_id());
-    glActiveTexture(GL_TEXTURE0);
-    glUniform1i(glGetUniformLocation(shader_program.get_id(), "tex"), 0);
+    glUniform1i(glGetUniformLocation(shader_program.get_id(), "tex"), 1);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     // ------ swap buffer
     glfwSwapBuffers(window);
     glBindVertexArray(0);
 }
+
