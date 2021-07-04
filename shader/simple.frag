@@ -9,3 +9,4 @@ out vec4 frag_texture;
 void main() {
     frag_texture = texture(tex, frag_tex_coord);
 }
+

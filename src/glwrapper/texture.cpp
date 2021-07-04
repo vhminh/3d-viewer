@@ -35,3 +35,4 @@ void Texture::move_from(Texture& another) {
 
 Texture::~Texture() {
 }
+

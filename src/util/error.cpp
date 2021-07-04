@@ -45,3 +45,4 @@ WindowCreationException::WindowCreationException(const std::string &msg) : msg(m
 const char* WindowCreationException::what() const noexcept {
     return msg.c_str();
 }
+

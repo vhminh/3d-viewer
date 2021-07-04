@@ -46,3 +46,4 @@ public:
 private:
     std::string msg;
 };
+

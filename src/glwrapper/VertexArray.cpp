@@ -8,3 +8,4 @@ VertexArray::VertexArray() {
 void VertexArray::bind() const {
     glBindVertexArray(this->id);
 }
+

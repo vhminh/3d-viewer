@@ -6,3 +6,4 @@ public:
     VertexArray();
     void bind() const;
 };
+

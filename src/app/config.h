@@ -6,4 +6,5 @@ const int DEFAULT_WINDOW_WIDTH = 800;
 const int DEFAULT_WINDOW_HEIGHT = 600;
 
 const float CAMERA_SPEED = 4;
-const float CAMERA_ROTATION_SPEED = 0.16;
+const float CAMERA_ROTATION_SPEED = 0.06;
+

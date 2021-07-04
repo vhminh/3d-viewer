@@ -20,3 +20,4 @@ public:
     void use() const;
     virtual ~ShaderProgram();
 };
+

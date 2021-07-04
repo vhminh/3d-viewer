@@ -70,3 +70,4 @@ ShaderProgram::~ShaderProgram() {
         glDeleteProgram(this->id);
     }
 }
+

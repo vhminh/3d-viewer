@@ -13,8 +13,8 @@ public:
 private:
     GLFWwindow* window;
     glm::vec3 origin;
-    float pitch, yaw;
-    std::tuple<double, double> last_cursor_pos;
+    double pitch, yaw;
+    glm::dvec2 last_cursor_pos;
     bool has_last_cursor;
 
     void process_keyboard_input(float dt);

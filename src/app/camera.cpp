@@ -64,16 +64,18 @@ void Camera::process_keyboard_input(float dt) {
 void Camera::process_mouse_input(float dt) {
     double x, y;
     glfwGetCursorPos(window, &x, &y);
+    glm::dvec2 cur_cursor_pos = glm::dvec2(x, y);
     if (!has_last_cursor) {
         has_last_cursor = true;
-        last_cursor_pos = std::make_tuple(x, y);
+        last_cursor_pos = cur_cursor_pos;
         return;
     }
 
-    yaw += CAMERA_ROTATION_SPEED * (x - std::get<0>(last_cursor_pos));
-    pitch += CAMERA_ROTATION_SPEED * (std::get<1>(last_cursor_pos) - y);
+    glm::dvec2 diff = cur_cursor_pos - last_cursor_pos;
+    yaw += CAMERA_ROTATION_SPEED * diff.x;
+    pitch -= CAMERA_ROTATION_SPEED * diff.y;
+    pitch = clamp(pitch, -45.0, 45.0);
 
-    pitch = clamp(pitch, -45.0f, 45.0f);
-
-    last_cursor_pos = std::make_tuple(x, y);
+    last_cursor_pos = cur_cursor_pos;
 }
+

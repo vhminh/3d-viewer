@@ -12,3 +12,4 @@ public:
     void move_from(Texture& another);
     ~Texture();
 };
+

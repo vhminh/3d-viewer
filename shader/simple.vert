@@ -12,3 +12,4 @@ void main() {
     gl_Position = projection_mat * view_mat * model_mat * vec4(pos, 1.0);
     frag_tex_coord = tex_coord;
 }
+
