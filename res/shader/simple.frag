@@ -8,6 +8,6 @@ uniform vec3 light_color;
 out vec4 frag_texture;
 
 void main() {
-    frag_texture = texture(tex, frag_tex_coord) * vec4(light_color, 1.0f);
+	frag_texture = texture(tex, frag_tex_coord) * vec4(light_color, 1.0f);
 }
 
