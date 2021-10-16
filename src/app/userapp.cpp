@@ -6,7 +6,6 @@
 #include <GLES3/gl3.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <iostream>
 
 UserApp::UserApp(const std::string& title, int width, int height)
 	: App(title, width, height),

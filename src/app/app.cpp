@@ -2,8 +2,6 @@
 
 #include "util/error.h"
 
-#include <iostream>
-
 void on_framebuffer_resize(GLFWwindow* window, int new_width, int new_height) {
 	glViewport(0, 0, new_width, new_height);
 }
