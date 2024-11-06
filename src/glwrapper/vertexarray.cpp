@@ -1,6 +1,6 @@
 #include "glwrapper/vertexarray.h"
 
-#include <GLES3/gl3.h>
+#include "gl3.h"
 
 VertexArray::VertexArray() { glGenVertexArrays(1, &this->id); }
 

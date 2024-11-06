@@ -3,7 +3,7 @@
 #include "stb_image.h"
 #include "util/error.h"
 
-#include <GL/gl.h>
+#include "gl.h"
 
 Texture::Texture(const std::string& path, int wrap_s, int wrap_t,
                  int min_filter, int mag_filter) {

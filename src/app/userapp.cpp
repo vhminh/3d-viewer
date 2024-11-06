@@ -3,7 +3,7 @@
 #include "app/config.h"
 #include "glwrapper/texture.h"
 
-#include <GLES3/gl3.h>
+#include "gl3.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 

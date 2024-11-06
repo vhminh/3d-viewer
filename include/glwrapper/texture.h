@@ -2,7 +2,7 @@
 #include "glwrapper/common.h"
 #include "util/macro.h"
 
-#include <GLES3/gl3.h>
+#include "gl3.h"
 #include <string>
 
 class Texture : public GLObject {

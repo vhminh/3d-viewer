@@ -2,7 +2,7 @@
 
 #include "util/error.h"
 
-#include <GLES3/gl3.h>
+#include "gl3.h"
 #include <fstream>
 
 Shader::Shader(unsigned type, const char* path) {
