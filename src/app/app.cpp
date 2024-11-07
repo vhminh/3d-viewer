@@ -21,7 +21,10 @@ App::App(const std::string& title, int width, int height) {
 	glfwMakeContextCurrent(window);
 
 	// View port
-	glViewport(0, 0, width, height);
+	int fb_width, fb_height;
+	glfwGetFramebufferSize(window, &fb_width, &fb_height);
+	glViewport(0, 0, fb_width, fb_height);
+
 	glfwSetFramebufferSizeCallback(window, on_framebuffer_resize);
 
 	glEnable(GL_DEPTH_TEST);
