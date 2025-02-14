@@ -65,7 +65,7 @@ ShaderProgram::ShaderProgram(Shader&& vertex_shader, Shader&& fragment_shader) {
 	// link
 	glLinkProgram(this->id);
 	int success;
-	glGetProgramiv(this->id, GL_COMPILE_STATUS, &success);
+	glGetProgramiv(this->id, GL_LINK_STATUS, &success);
 	if (!success) {
 		char err_msg[2048];
 		glGetProgramInfoLog(this->id, 2048, NULL, err_msg);

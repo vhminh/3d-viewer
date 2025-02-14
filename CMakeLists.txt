@@ -9,10 +9,13 @@ target_include_directories(learnopengl PUBLIC ${CMAKE_SOURCE_DIR}/include)
 
 set_property(TARGET learnopengl PROPERTY CXX_STANDARD 20)
 
-# find_package(OpenGL REQUIRED)
-# find_package(glfw3 REQUIRED)
-find_library(OpenGL_LIBRARY OpenGL)
+find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
+if (APPLE)
+  set(LIBS ${OPENGL_LIBRARIES} glfw)
+elseif(UNIX AND NOT APPLE)
+  set(LIBS GL glfw)
+endif (APPLE)
 
-target_link_libraries(learnopengl ${OpenGL_LIBRARY} glfw)
+target_link_libraries(learnopengl ${LIBS})
 
