@@ -1,4 +1,3 @@
-#define STB_IMAGE_IMPLEMENTATION
 #include "app/config.h"
 #include "app/userapp.h"
 #include "stb_image.h"
