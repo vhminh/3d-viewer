@@ -5,9 +5,8 @@
 class Shader : public GLObject {
 public:
 	NO_COPY(Shader);
+	MOVE(Shader);
 	Shader(unsigned type, const char* path);
-	Shader(Shader&& another);
-	Shader& operator=(Shader&& another);
 	virtual ~Shader();
 };
 
