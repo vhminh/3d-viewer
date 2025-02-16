@@ -4,14 +4,10 @@ pkgs.mkShell {
     gcc
     cmake
     libGL
-    libGL.dev
+    libglvnd
     glfw3
     glfw
     glm
     clang-tools
-  ];
-  buildInputs = with pkgs; [
-      glfw3
-      glfw
   ];
 }
