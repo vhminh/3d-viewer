@@ -9,11 +9,11 @@
 
 UserApp::UserApp(const std::string& title, int width, int height)
 	: App(title, width, height),
-	  shader_program(Shader(GL_VERTEX_SHADER, "res/shader/simple.vert"),
-                     Shader(GL_FRAGMENT_SHADER, "res/shader/simple.frag")),
+	  shader_program(Shader(GL_VERTEX_SHADER, "res/shader/simple.v.glsl"),
+                     Shader(GL_FRAGMENT_SHADER, "res/shader/simple.f.glsl")),
 	  light_shader_program(
-		  Shader(GL_VERTEX_SHADER, "res/shader/simple.vert"),
-		  Shader(GL_FRAGMENT_SHADER, "res/shader/light-source.frag")),
+		  Shader(GL_VERTEX_SHADER, "res/shader/simple.v.glsl"),
+		  Shader(GL_FRAGMENT_SHADER, "res/shader/light-source.f.glsl")),
 	  duck("res/texture/duck.jpg"), grass("res/texture/grass.png"),
 	  camera(window, glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0) {
 
@@ -214,7 +214,7 @@ void UserApp::render() const {
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(projection_mat));
 
 	loc = glGetUniformLocation(shader_program.get_id(), "light_color");
-	glUniform3fv(loc, 1, glm::value_ptr(glm::vec3(1.0f, 0.2f, 0.7f)));
+	glUniform3fv(loc, 1, glm::value_ptr(glm::vec3(0.75f, 1.0f, 0.7f)));
 
 	glBindVertexArray(cube.get_id());
 	glActiveTexture(GL_TEXTURE0);
