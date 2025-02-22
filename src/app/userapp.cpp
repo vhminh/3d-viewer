@@ -208,7 +208,7 @@ void UserApp::render() const {
 
 	double time = glfwGetTime();
 
-	glm::vec3 light_pos(cos(time) * 1.5, 1.5, sin(time) * 1.5);
+	glm::vec3 light_pos(cos(time) * 1.25, 1.25, sin(time) * 1.5);
 
 	// ------ draw cube
 	glm::mat4 model_mat = glm::mat4(1.0);
