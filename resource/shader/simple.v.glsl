@@ -15,7 +15,8 @@ out vec3 f_position;
 void main() {
 	gl_Position = projection_mat * view_mat * model_mat * vec4(pos, 1.0);
 	f_tex_coord = tex_coord;
-	f_normal = mat3(transpose(inverse(model_mat))) * normal;
+	//f_normal = mat3(transpose(inverse(model_mat))) * normal; // slow
+	f_normal = vec3(model_mat * vec4(normal, 0.0)); // only work with uniform scale
 	f_position = vec3(model_mat * vec4(pos, 1.0));
 }
 

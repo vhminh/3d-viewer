@@ -116,6 +116,10 @@ UserApp::UserApp(const std::string& title, int width, int height)
 	                      (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+	                      (void*)(5 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
 	// light
 	float light_vertices[] = {
 		// clang-format off
@@ -209,9 +213,9 @@ void UserApp::render() const {
 	// ------ draw cube
 	glm::mat4 model_mat = glm::mat4(1.0);
 	model_mat = glm::translate(model_mat, glm::vec3(0.0, 1.0, 0.0));
-	model_mat = glm::rotate(model_mat,
-	                        glm::radians(float(sin(time + 1) * 90.0f)),
-	                        glm::vec3(1.0f, 0.0f, 0.0f));
+	model_mat =
+		glm::rotate(model_mat, glm::radians(float(sin(time + 1) * 90.0f)),
+	                glm::vec3(1.0f, 0.0f, 0.0f));
 	GLint loc = glGetUniformLocation(shader_program.get_id(), "model_mat");
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model_mat));
 
@@ -219,7 +223,7 @@ void UserApp::render() const {
 	glUniformMatrix4fv(loc, 1, GL_FALSE,
 	                   glm::value_ptr(camera.get_view_matrix()));
 
-	glm::mat4 projection_mat = glm::perspective(
+	const glm::mat4 projection_mat = glm::perspective(
 		glm::radians(45.0), DEFAULT_WINDOW_WIDTH * 1.0 / DEFAULT_WINDOW_HEIGHT,
 		0.1, 100.0);
 	loc = glGetUniformLocation(shader_program.get_id(), "projection_mat");

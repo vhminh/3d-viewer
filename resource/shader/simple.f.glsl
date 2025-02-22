@@ -21,6 +21,6 @@ void main() {
 	float diffuse = light_strength_given_angle(-light_dir, f_normal) * 0.8;
 	vec3 reflected_light_dir = reflect(light_dir, f_normal);
 	float specular = pow(light_strength_given_angle(reflected_light_dir, camera_origin - f_position), 256) * 0.5;
-	output = texture(tex, f_tex_coord) * vec4(light_color * (ambient + diffuse + specular), 1.0);
+	output = texture(tex, f_tex_coord) * (vec4(light_color, 1.0) * (ambient + diffuse + specular));
 }
 
