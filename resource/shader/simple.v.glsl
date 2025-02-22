@@ -11,13 +11,11 @@ uniform vec3 light_pos;
 out vec2 f_tex_coord;
 out vec3 f_normal;
 out vec3 f_position;
-out vec3 f_light_pos;
 
 void main() {
 	gl_Position = projection_mat * view_mat * model_mat * vec4(pos, 1.0);
 	f_tex_coord = tex_coord;
-	f_normal = (model_mat * vec4(normal, 1.0)).xyz;
-	f_position = (model_mat * vec4(pos, 1.0)).xyz;
-	f_light_pos = light_pos;
+	f_normal = mat3(transpose(inverse(model_mat))) * normal;
+	f_position = vec3(model_mat * vec4(pos, 1.0));
 }
 

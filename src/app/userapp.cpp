@@ -202,11 +202,15 @@ void UserApp::render() const {
 
 	shader_program.use();
 
+	double time = glfwGetTime();
+
+	glm::vec3 light_pos(cos(time) * 1.5, 1.5, sin(time) * 1.5);
+
 	// ------ draw cube
 	glm::mat4 model_mat = glm::mat4(1.0);
 	model_mat = glm::translate(model_mat, glm::vec3(0.0, 1.0, 0.0));
 	model_mat = glm::rotate(model_mat,
-	                        glm::radians(float(sin(glfwGetTime() + 1) * 90.0f)),
+	                        glm::radians(float(sin(time + 1) * 90.0f)),
 	                        glm::vec3(1.0f, 0.0f, 0.0f));
 	GLint loc = glGetUniformLocation(shader_program.get_id(), "model_mat");
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model_mat));
@@ -225,7 +229,10 @@ void UserApp::render() const {
 	glUniform3fv(loc, 1, glm::value_ptr(glm::vec3(0.75f, 1.0f, 0.7f)));
 
 	loc = glGetUniformLocation(shader_program.get_id(), "light_pos");
-	glUniform3fv(loc, 1, glm::value_ptr(glm::vec3(2.0, 1.5, 2.0)));
+	glUniform3fv(loc, 1, glm::value_ptr(light_pos));
+
+	loc = glGetUniformLocation(shader_program.get_id(), "camera_origin");
+	glUniform3fv(loc, 1, glm::value_ptr(camera.get_origin()));
 
 	glBindVertexArray(cube.get_id());
 	glActiveTexture(GL_TEXTURE0);
@@ -248,7 +255,7 @@ void UserApp::render() const {
 	light_shader_program.use();
 
 	model_mat = glm::mat4(1.0);
-	model_mat = glm::translate(model_mat, glm::vec3(2.0, 1.5, 2.0));
+	model_mat = glm::translate(model_mat, light_pos);
 	model_mat = glm::scale(model_mat, glm::vec3(0.25f, 0.25f, 0.25f));
 	loc = glGetUniformLocation(light_shader_program.get_id(), "model_mat");
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model_mat));
