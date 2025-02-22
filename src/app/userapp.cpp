@@ -1,20 +1,21 @@
 #include "app/userapp.h"
 
 #include "app/config.h"
+#include "gl3.h"
 #include "glwrapper/texture.h"
 
-#include "gl3.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 UserApp::UserApp(const std::string& title, int width, int height)
 	: App(title, width, height),
-	  shader_program(Shader(GL_VERTEX_SHADER, "res/shader/simple.v.glsl"),
-                     Shader(GL_FRAGMENT_SHADER, "res/shader/simple.f.glsl")),
+	  shader_program(
+		  Shader(GL_VERTEX_SHADER, "resource/shader/simple.v.glsl"),
+		  Shader(GL_FRAGMENT_SHADER, "resource/shader/simple.f.glsl")),
 	  light_shader_program(
-		  Shader(GL_VERTEX_SHADER, "res/shader/simple.v.glsl"),
-		  Shader(GL_FRAGMENT_SHADER, "res/shader/light-source.f.glsl")),
-	  duck("res/texture/duck.jpg"), grass("res/texture/grass.png"),
+		  Shader(GL_VERTEX_SHADER, "resource/shader/simple.v.glsl"),
+		  Shader(GL_FRAGMENT_SHADER, "resource/shader/light-source.f.glsl")),
+	  duck("resource/texture/duck.jpg"), grass("resource/texture/grass.png"),
 	  camera(window, glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0) {
 
 	cam_pos = glm::vec3(0.0f, 0.0f, 1.0f);
@@ -23,54 +24,54 @@ UserApp::UserApp(const std::string& title, int width, int height)
 	// cube
 	float vertices[] = {
 		// clang-format off
-		// vert           // texture
-		-0.5, -0.5,  0.5, 0.0, 0.0, // front
-		-0.5,  0.5,  0.5, 0.0, 1.0,
-		 0.5,  0.5,  0.5, 1.0, 1.0,
+		// vert           // texture // normal
+		-0.5, -0.5,  0.5, 0.0, 0.0,  0.0, 0.0, 1.0, // front
+		-0.5,  0.5,  0.5, 0.0, 1.0,  0.0, 0.0, 1.0,
+		 0.5,  0.5,  0.5, 1.0, 1.0,  0.0, 0.0, 1.0,
 		
-		 0.5,  0.5,  0.5, 1.0, 1.0,
-		 0.5, -0.5,  0.5, 1.0, 0.0,
-		-0.5, -0.5,  0.5, 0.0, 0.0,
+		 0.5,  0.5,  0.5, 1.0, 1.0,  0.0, 0.0, 1.0,
+		 0.5, -0.5,  0.5, 1.0, 0.0,  0.0, 0.0, 1.0,
+		-0.5, -0.5,  0.5, 0.0, 0.0,  0.0, 0.0, 1.0,
 		
-		 0.5, -0.5, -0.5, 0.0, 0.0, // back
-		 0.5,  0.5, -0.5, 0.0, 1.0,
-		-0.5,  0.5, -0.5, 1.0, 1.0,
+		 0.5, -0.5, -0.5, 0.0, 0.0,  0.0, 0.0, -1.0, // back
+		 0.5,  0.5, -0.5, 0.0, 1.0,  0.0, 0.0, -1.0,
+		-0.5,  0.5, -0.5, 1.0, 1.0,  0.0, 0.0, -1.0,
 		
-		-0.5,  0.5, -0.5, 1.0, 1.0,
-		-0.5, -0.5, -0.5, 1.0, 0.0,
-		 0.5, -0.5, -0.5, 0.0, 0.0,
+		-0.5,  0.5, -0.5, 1.0, 1.0,  0.0, 0.0, -1.0,
+		-0.5, -0.5, -0.5, 1.0, 0.0,  0.0, 0.0, -1.0,
+		 0.5, -0.5, -0.5, 0.0, 0.0,  0.0, 0.0, -1.0,
 		
-		-0.5,  0.5,  0.5, 0.0, 0.0, // up
-		-0.5,  0.5, -0.5, 0.0, 1.0,
-		 0.5,  0.5, -0.5, 1.0, 1.0,
+		-0.5,  0.5,  0.5, 0.0, 0.0,  0.0, 1.0, 0.0, // up
+		-0.5,  0.5, -0.5, 0.0, 1.0,  0.0, 1.0, 0.0,
+		 0.5,  0.5, -0.5, 1.0, 1.0,  0.0, 1.0, 0.0,
 		
-		 0.5,  0.5, -0.5, 1.0, 1.0,
-		 0.5,  0.5,  0.5, 1.0, 0.0,
-		-0.5,  0.5,  0.5, 0.0, 0.0,
+		 0.5,  0.5, -0.5, 1.0, 1.0,  0.0, 1.0, 0.0,
+		 0.5,  0.5,  0.5, 1.0, 0.0,  0.0, 1.0, 0.0,
+		-0.5,  0.5,  0.5, 0.0, 0.0,  0.0, 1.0, 0.0,
 		
-		-0.5, -0.5, -0.5, 0.0, 0.0, // bottom
-		-0.5, -0.5,  0.5, 0.0, 1.0,
-		 0.5, -0.5,  0.5, 1.0, 1.0,
+		-0.5, -0.5, -0.5, 0.0, 0.0,  0.0, -1.0, 0.0, // bottom
+		-0.5, -0.5,  0.5, 0.0, 1.0,  0.0, -1.0, 0.0,
+		 0.5, -0.5,  0.5, 1.0, 1.0,  0.0, -1.0, 0.0,
 		
-		 0.5, -0.5,  0.5, 1.0, 1.0,
-		 0.5, -0.5, -0.5, 1.0, 0.0,
-		-0.5, -0.5, -0.5, 0.0, 0.0,
+		 0.5, -0.5,  0.5, 1.0, 1.0,  0.0, -1.0, 0.0,
+		 0.5, -0.5, -0.5, 1.0, 0.0,  0.0, -1.0, 0.0,
+		-0.5, -0.5, -0.5, 0.0, 0.0,  0.0, -1.0, 0.0,
 		
-		-0.5, -0.5, -0.5, 0.0, 0.0, // left
-		-0.5,  0.5, -0.5, 0.0, 1.0,
-		-0.5,  0.5,  0.5, 1.0, 1.0,
+		-0.5, -0.5, -0.5, 0.0, 0.0,  -1.0, 0.0, 0.0, // left
+		-0.5,  0.5, -0.5, 0.0, 1.0,  -1.0, 0.0, 0.0,
+		-0.5,  0.5,  0.5, 1.0, 1.0,  -1.0, 0.0, 0.0,
 		
-		-0.5,  0.5,  0.5, 1.0, 1.0,
-		-0.5, -0.5,  0.5, 1.0, 0.0,
-		-0.5, -0.5, -0.5, 0.0, 0.0, 
-		
-		 0.5, -0.5,  0.5, 0.0, 0.0, // right
-		 0.5,  0.5,  0.5, 0.0, 1.0,
-		 0.5,  0.5, -0.5, 1.0, 1.0,
-		
-		 0.5,  0.5, -0.5, 1.0, 1.0,
-		 0.5, -0.5, -0.5, 1.0, 0.0,
-		 0.5, -0.5,  0.5, 0.0, 0.0,
+		-0.5,  0.5,  0.5, 1.0, 1.0,  -1.0, 0.0, 0.0,
+		-0.5, -0.5,  0.5, 1.0, 0.0,  -1.0, 0.0, 0.0,
+		-0.5, -0.5, -0.5, 0.0, 0.0,  -1.0, 0.0, 0.0,
+
+		 0.5, -0.5,  0.5, 0.0, 0.0,  1.0, 0.0, 0.0,// right
+		 0.5,  0.5,  0.5, 0.0, 1.0,  1.0, 0.0, 0.0,
+		 0.5,  0.5, -0.5, 1.0, 1.0,  1.0, 0.0, 0.0,
+
+		 0.5,  0.5, -0.5, 1.0, 1.0,  1.0, 0.0, 0.0,
+		 0.5, -0.5, -0.5, 1.0, 0.0,  1.0, 0.0, 0.0,
+		 0.5, -0.5,  0.5, 0.0, 0.0,  1.0, 0.0, 0.0,
 		// clang-format on
 	};
 	glBindVertexArray(cube.get_id());
@@ -78,24 +79,28 @@ UserApp::UserApp(const std::string& title, int width, int height)
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
 	glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
 	                      (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+	                      (void*)(5 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	// ground
 	float ground_vertices[] = {
 		// clang-format off
-		// vert             // texture
-		-10.0,  0.0,  10.0,  0.0,  0.0,
-		-10.0,  0.0, -10.0,  0.0, 10.0,
-		 10.0,  0.0, -10.0, 10.0, 10.0,
+		// vert             // texture  // normal
+		-10.0,  0.0,  10.0,  0.0,  0.0, 0.0, 1.0, 0.0,
+		-10.0,  0.0, -10.0,  0.0, 10.0, 0.0, 1.0, 0.0,
+		 10.0,  0.0, -10.0, 10.0, 10.0, 0.0, 1.0, 0.0,
 		
-		 10.0,  0.0, -10.0, 10.0, 10.0,
-		 10.0,  0.0,  10.0, 10.0,  0.0,
-		-10.0,  0.0,  10.0,  0.0,  0.0,
+		 10.0,  0.0, -10.0, 10.0, 10.0, 0.0, 1.0, 0.0,
+		 10.0,  0.0,  10.0, 10.0,  0.0, 0.0, 1.0, 0.0,
+		-10.0,  0.0,  10.0,  0.0,  0.0, 0.0, 1.0, 0.0,
 		// clang-format on
 	};
 	glBindVertexArray(ground.get_id());
@@ -104,10 +109,10 @@ UserApp::UserApp(const std::string& title, int width, int height)
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(ground_vertices), ground_vertices,
 	             GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
 	glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
 	                      (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
@@ -177,6 +182,9 @@ void UserApp::process_input(float dt) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+		glfwSetWindowShouldClose(window, true);
+	}
 	camera.process_input(dt);
 }
 
@@ -216,6 +224,9 @@ void UserApp::render() const {
 	loc = glGetUniformLocation(shader_program.get_id(), "light_color");
 	glUniform3fv(loc, 1, glm::value_ptr(glm::vec3(0.75f, 1.0f, 0.7f)));
 
+	loc = glGetUniformLocation(shader_program.get_id(), "light_pos");
+	glUniform3fv(loc, 1, glm::value_ptr(glm::vec3(2.0, 1.5, 2.0)));
+
 	glBindVertexArray(cube.get_id());
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, duck.get_id());
@@ -238,7 +249,7 @@ void UserApp::render() const {
 
 	model_mat = glm::mat4(1.0);
 	model_mat = glm::translate(model_mat, glm::vec3(2.0, 1.5, 2.0));
-	model_mat = glm::scale(model_mat, glm::vec3(0.5f, 0.5f, 0.5f));
+	model_mat = glm::scale(model_mat, glm::vec3(0.25f, 0.25f, 0.25f));
 	loc = glGetUniformLocation(light_shader_program.get_id(), "model_mat");
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model_mat));
 	loc = glGetUniformLocation(light_shader_program.get_id(), "view_mat");
