@@ -9,18 +9,17 @@
 
 UserApp::UserApp(const std::string& title, int width, int height)
 	: App(title, width, height),
-	  shader_program(
-		  Shader(GL_VERTEX_SHADER, "resource/shader/simple.v.glsl"),
-		  Shader(GL_FRAGMENT_SHADER, "resource/shader/simple.f.glsl")),
-	  light_shader_program(
-		  Shader(GL_VERTEX_SHADER, "resource/shader/simple.v.glsl"),
-		  Shader(GL_FRAGMENT_SHADER, "resource/shader/light-source.f.glsl")),
-	  duck("resource/texture/duck.jpg"), grass("resource/texture/grass.png"),
+	  shader_program(Shader::create("resource/shader/simple.v.glsl", "resource/shader/simple.f.glsl")),
+	  light_shader_program(Shader::create("resource/shader/simple.v.glsl", "resource/shader/light-source.f.glsl")),
+	  duck(Texture::create("resource/texture/duck.jpg")), grass(Texture::create("resource/texture/grass.png")),
 	  camera(window, glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0) {
 
 	cam_pos = glm::vec3(0.0f, 0.0f, 1.0f);
 	cam_center = glm::vec3(0.0, 0.0, 0.0);
 
+	glGenVertexArrays(1, &cube_vao);
+	glGenVertexArrays(1, &ground_vao);
+	glGenVertexArrays(1, &light_vao);
 	// cube
 	float vertices[] = {
 		// clang-format off
@@ -74,7 +73,7 @@ UserApp::UserApp(const std::string& title, int width, int height)
 		 0.5, -0.5,  0.5, 0.0, 0.0,  1.0, 0.0, 0.0,
 		// clang-format on
 	};
-	glBindVertexArray(cube.get_id());
+	glBindVertexArray(cube_vao);
 	GLuint vbo;
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -82,12 +81,10 @@ UserApp::UserApp(const std::string& title, int width, int height)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
 	glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-	                      (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-	                      (void*)(5 * sizeof(float)));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
 	// ground
@@ -103,21 +100,18 @@ UserApp::UserApp(const std::string& title, int width, int height)
 		-10.0,  0.0,  10.0,  0.0,  0.0, 0.0, 1.0, 0.0,
 		// clang-format on
 	};
-	glBindVertexArray(ground.get_id());
+	glBindVertexArray(ground_vao);
 
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(ground_vertices), ground_vertices,
-	             GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(ground_vertices), ground_vertices, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
 	glEnableVertexAttribArray(0);
 
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-	                      (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-	                      (void*)(5 * sizeof(float)));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
 	// light
@@ -172,12 +166,11 @@ UserApp::UserApp(const std::string& title, int width, int height)
 		 0.5, -0.5,  0.5,
 		// clang-format on
 	};
-	glBindVertexArray(light.get_id());
+	glBindVertexArray(light_vao);
 
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(light_vertices), light_vertices,
-	             GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(light_vertices), light_vertices, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
 	glEnableVertexAttribArray(0);
 }
@@ -213,19 +206,15 @@ void UserApp::render() const {
 	// ------ draw cube
 	glm::mat4 model_mat = glm::mat4(1.0);
 	model_mat = glm::translate(model_mat, glm::vec3(0.0, 1.0, 0.0));
-	model_mat =
-		glm::rotate(model_mat, glm::radians(float(sin(time + 1) * 90.0f)),
-	                glm::vec3(1.0f, 0.0f, 0.0f));
+	model_mat = glm::rotate(model_mat, glm::radians(float(sin(time + 1) * 90.0f)), glm::vec3(1.0f, 0.0f, 0.0f));
 	GLint loc = glGetUniformLocation(shader_program.get_id(), "model_mat");
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model_mat));
 
 	loc = glGetUniformLocation(shader_program.get_id(), "view_mat");
-	glUniformMatrix4fv(loc, 1, GL_FALSE,
-	                   glm::value_ptr(camera.get_view_matrix()));
+	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(camera.get_view_matrix()));
 
-	const glm::mat4 projection_mat = glm::perspective(
-		glm::radians(45.0), DEFAULT_WINDOW_WIDTH * 1.0 / DEFAULT_WINDOW_HEIGHT,
-		0.1, 100.0);
+	const glm::mat4 projection_mat =
+		glm::perspective(glm::radians(45.0), DEFAULT_WINDOW_WIDTH * 1.0 / DEFAULT_WINDOW_HEIGHT, 0.1, 100.0);
 	loc = glGetUniformLocation(shader_program.get_id(), "projection_mat");
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(projection_mat));
 
@@ -238,7 +227,7 @@ void UserApp::render() const {
 	loc = glGetUniformLocation(shader_program.get_id(), "camera_origin");
 	glUniform3fv(loc, 1, glm::value_ptr(camera.get_origin()));
 
-	glBindVertexArray(cube.get_id());
+	glBindVertexArray(cube_vao);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, duck.get_id());
 	glUniform1i(glGetUniformLocation(shader_program.get_id(), "tex"), 0);
@@ -249,7 +238,7 @@ void UserApp::render() const {
 	loc = glGetUniformLocation(shader_program.get_id(), "model_mat");
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model_mat));
 
-	glBindVertexArray(ground.get_id());
+	glBindVertexArray(ground_vao);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, grass.get_id());
 	glUniform1i(glGetUniformLocation(shader_program.get_id(), "tex"), 1);
@@ -264,12 +253,11 @@ void UserApp::render() const {
 	loc = glGetUniformLocation(light_shader_program.get_id(), "model_mat");
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model_mat));
 	loc = glGetUniformLocation(light_shader_program.get_id(), "view_mat");
-	glUniformMatrix4fv(loc, 1, GL_FALSE,
-	                   glm::value_ptr(camera.get_view_matrix()));
+	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(camera.get_view_matrix()));
 	loc = glGetUniformLocation(light_shader_program.get_id(), "projection_mat");
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(projection_mat));
 
-	glBindVertexArray(light.get_id());
+	glBindVertexArray(light_vao);
 	glDrawArrays(GL_TRIANGLES, 0, 3 * 2 * 6);
 	// ------ swap buffer
 	glfwSwapBuffers(window);

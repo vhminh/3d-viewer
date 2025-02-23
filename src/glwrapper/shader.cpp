@@ -1,85 +1,83 @@
 #include "glwrapper/shader.h"
 
+#include "gl3.h"
 #include "util/error.h"
 
-#include "gl3.h"
 #include <fstream>
 
-Shader::Shader(unsigned type, const char* path) {
-	// read shader source code from file
-	std::ifstream fin(path);
-	if (!fin.is_open()) {
-		throw FileNotFoundException(path);
-	}
-	std::string line;
-	std::string file_content;
-	while (getline(fin, line)) {
-		file_content.append(line).append("\n");
-	}
-	const char* src = file_content.c_str();
-	// create shader
-	this->id = glCreateShader(type);
-	glShaderSource(this->id, 1, &src, nullptr);
-	// compile
-	glCompileShader(this->id);
-	// check compile status
-	int success;
-	glGetShaderiv(this->id, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		char err_msg[1024];
-		glGetShaderInfoLog(this->id, 1024, NULL, err_msg);
-		throw ShaderCompilationException(
-			std::string("Error compile shader from source file \"") + path +
-			"\": " + std::string(err_msg));
-	}
-}
+// reference to one vertext shader or fragment shader
+class SingleShader : public GLObject {
+public:
+	SingleShader(GLint id) : GLObject(id) {}
 
-Shader::~Shader() {
-	if (this->id != ID_NONE) {
-		glDeleteShader(this->id);
-	}
-}
+	NO_COPY(SingleShader);
 
-Shader::Shader(Shader&& another) {
-	this->id = another.id;
-	another.id = ID_NONE;
-}
+	SingleShader(SingleShader&& another) : GLObject(another.id) { another.id = GLObject::ID_NONE; }
+	Shader& operator=(Shader&& another) = delete;
 
-Shader& Shader::operator=(Shader&& another) {
-	if (this == &another) {
-		return *this;
+	static SingleShader create(GLenum type, const char* path) {
+		// read shader from file
+		std::ifstream fin(path);
+		if (!fin.is_open()) {
+			throw FileNotFoundException(path);
+		}
+		std::string line;
+		std::string file_content;
+		while (getline(fin, line)) {
+			file_content.append(line).append("\n");
+		}
+		const char* src = file_content.c_str();
+		// create shader
+		GLuint id = glCreateShader(type);
+		SingleShader shader = SingleShader(id); // RAII
+		glShaderSource(id, 1, &src, nullptr);
+		// compile
+		glCompileShader(shader.id);
+		// check compile status
+		int success;
+		glGetShaderiv(shader.id, GL_COMPILE_STATUS, &success);
+		if (!success) {
+			char err_msg[1024];
+			glGetShaderInfoLog(shader.id, 1024, NULL, err_msg);
+			throw ShaderCompilationException(std::string("Error compile shader from source file \"") + path +
+			                                 "\": " + std::string(err_msg));
+		}
+		return shader;
 	}
-	if (this->id != ID_NONE) {
-		glDeleteShader(this->id);
+	~SingleShader() {
+		if (id != GLObject::ID_NONE)
+			glDeleteShader(id);
 	}
-	this->id = another.id;
-	another.id = ID_NONE;
-	return *this;
-}
+};
 
-ShaderProgram::ShaderProgram(Shader&& vertex_shader, Shader&& fragment_shader) {
-	this->id = glCreateProgram();
+Shader Shader::create(const char* vertex_shader_path, const char* fragment_shader_path) {
+	GLuint id = glCreateProgram();
+
 	// attach shaders
-	glAttachShader(this->id, vertex_shader.get_id());
-	glAttachShader(this->id, fragment_shader.get_id());
+	SingleShader vertex = SingleShader::create(GL_VERTEX_SHADER, vertex_shader_path);
+	SingleShader fragment = SingleShader::create(GL_FRAGMENT_SHADER, fragment_shader_path);
+	glAttachShader(id, vertex.get_id());
+	glAttachShader(id, fragment.get_id());
+
 	// link
-	glLinkProgram(this->id);
+	glLinkProgram(id);
+	Shader shader = Shader(id); // RAII
+
 	int success;
-	glGetProgramiv(this->id, GL_LINK_STATUS, &success);
+	glGetProgramiv(shader.get_id(), GL_LINK_STATUS, &success);
 	if (!success) {
 		char err_msg[2048];
-		glGetProgramInfoLog(this->id, 2048, NULL, err_msg);
-		throw ProgramLinkageException(std::string("Error link program: ") +
-		                              std::string(err_msg));
+		glGetProgramInfoLog(shader.get_id(), 2048, NULL, err_msg);
+		throw ProgramLinkageException(std::string("Error link program: ") + std::string(err_msg));
 	}
+	return shader;
 }
 
-ShaderProgram::ShaderProgram(ShaderProgram&& another) {
-	this->id = another.id;
-	another.id = ID_NONE;
-}
+Shader::Shader(GLuint id) : GLObject(id) {}
 
-ShaderProgram& ShaderProgram::operator=(ShaderProgram&& another) {
+Shader::Shader(Shader&& another) : GLObject(another.id) { another.id = GLObject::ID_NONE; }
+
+Shader& Shader::operator=(Shader&& another) {
 	if (this == &another) {
 		return *this;
 	}
@@ -91,9 +89,9 @@ ShaderProgram& ShaderProgram::operator=(ShaderProgram&& another) {
 	return *this;
 }
 
-void ShaderProgram::use() const { glUseProgram(id); }
+void Shader::use() const { glUseProgram(id); }
 
-ShaderProgram::~ShaderProgram() {
+Shader::~Shader() {
 	if (this->id != GLObject::ID_NONE) {
 		glDeleteProgram(this->id);
 	}

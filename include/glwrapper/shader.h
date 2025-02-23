@@ -1,21 +1,16 @@
 #pragma once
-#include "glwrapper/common.h"
+#include "glwrapper/gl_object.h"
 #include "util/macro.h"
 
 class Shader : public GLObject {
 public:
 	NO_COPY(Shader);
 	MOVE(Shader);
-	Shader(unsigned type, const char* path);
+	static Shader create(const char* vertex_shader_path, const char* flagment_shader_path);
 	virtual ~Shader();
-};
 
-class ShaderProgram : public GLObject {
-public:
-	NO_COPY(ShaderProgram);
-	ShaderProgram(Shader&& vertex_shader, Shader&& fragment_shader);
-	ShaderProgram(ShaderProgram&& another);
-	ShaderProgram& operator=(ShaderProgram&& another);
 	void use() const;
-	virtual ~ShaderProgram();
+
+private:
+	Shader(GLuint id);
 };

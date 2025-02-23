@@ -3,7 +3,6 @@
 #include "camera.h"
 #include "glwrapper/shader.h"
 #include "glwrapper/texture.h"
-#include "glwrapper/vertexarray.h"
 #include "util/macro.h"
 
 #include <glm/glm.hpp>
@@ -18,11 +17,11 @@ public:
 
 private:
 	Camera camera;
-	ShaderProgram shader_program;
-	ShaderProgram light_shader_program;
-	VertexArray ground;
-	VertexArray cube;
-	VertexArray light;
+	GLuint cube_vao;
+	GLuint light_vao;
+	GLuint ground_vao;
+	Shader shader_program;
+	Shader light_shader_program;
 	Texture duck, grass;
 	unsigned vert_arr_id;
 	glm::vec3 cam_pos;
