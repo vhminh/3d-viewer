@@ -28,4 +28,5 @@ private:
 	glm::vec3 cam_center;
 
 	double update_fps_countdown = 1.0;
+	int frame_count = 0;
 };

@@ -9,23 +9,17 @@
 
 int main() {
 
-	UserApp app("Learn OpenGL", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
+	UserApp app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
 
 	/* Assimp::Importer importer; */
-	/* const aiScene* scene = importer.ReadFile( */
-	/* 	"New_Sponza/New_Sponza_001.gltf", */
-	/* 	aiProcess_CalcTangentSpace | aiProcess_Triangulate | */
-	/* 		aiProcess_JoinIdenticalVertices | aiProcess_SortByPType); */
-	/* std::cout << "lights: " << scene->HasLights() << " " << scene->mNumLights */
-	/* 		  << std::endl; */
-	/* std::cout << "cameras: " << scene->HasCameras() << " " << scene->mNumCameras */
-	/* 		  << std::endl; */
-	/* std::cout << "materials: " << scene->HasMaterials() << " " */
-	/* 		  << scene->mNumMaterials << std::endl; */
-	/* std::cout << "meshes: " << scene->HasMeshes() << " " << scene->mNumMeshes */
-	/* 		  << std::endl; */
-	/* std::cout << "animations: " << scene->HasAnimations() << " " */
-	/* 		  << scene->mNumAnimations << std::endl; */
+	/* const aiScene* scene = importer.ReadFile("/home/minh/Downloads/New_Sponza/New_Sponza_001.gltf", */
+	/*                                          aiProcess_CalcTangentSpace | aiProcess_Triangulate | */
+	/*                                              aiProcess_JoinIdenticalVertices | aiProcess_SortByPType); */
+	/* std::cout << "lights: " << scene->HasLights() << " " << scene->mNumLights << std::endl; */
+	/* std::cout << "cameras: " << scene->HasCameras() << " " << scene->mNumCameras << std::endl; */
+	/* std::cout << "materials: " << scene->HasMaterials() << " " << scene->mNumMaterials << std::endl; */
+	/* std::cout << "meshes: " << scene->HasMeshes() << " " << scene->mNumMeshes << std::endl; */
+	/* std::cout << "animations: " << scene->HasAnimations() << " " << scene->mNumAnimations << std::endl; */
 
 	double prev_time = glfwGetTime();
 
