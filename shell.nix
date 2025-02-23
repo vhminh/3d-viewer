@@ -8,6 +8,7 @@ pkgs.mkShell {
     glfw3
     glfw
     glm
+    zlib
     clang-tools
   ];
 }
