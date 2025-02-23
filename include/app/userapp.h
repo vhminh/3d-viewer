@@ -13,15 +13,15 @@ public:
 	UserApp(const std::string& title, int width, int height);
 	virtual void process_input(float dt);
 	virtual void update(float dt);
-	virtual void render() const;
+	virtual void render();
 
 private:
 	Camera camera;
 	GLuint cube_vao;
 	GLuint light_vao;
 	GLuint ground_vao;
-	Shader shader_program;
-	Shader light_shader_program;
+	Shader shader;
+	Shader light_shader;
 	Texture duck, grass;
 	unsigned vert_arr_id;
 	glm::vec3 cam_pos;

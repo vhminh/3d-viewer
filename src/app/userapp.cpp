@@ -9,8 +9,8 @@
 
 UserApp::UserApp(const std::string& title, int width, int height)
 	: App(title, width, height),
-	  shader_program(Shader::create("resource/shader/simple.v.glsl", "resource/shader/simple.f.glsl")),
-	  light_shader_program(Shader::create("resource/shader/simple.v.glsl", "resource/shader/light-source.f.glsl")),
+	  shader(Shader::create("resource/shader/simple.v.glsl", "resource/shader/simple.f.glsl")),
+	  light_shader(Shader::create("resource/shader/simple.v.glsl", "resource/shader/light-source.f.glsl")),
 	  duck(Texture::create("resource/texture/duck.jpg")), grass(Texture::create("resource/texture/grass.png")),
 	  camera(window, glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0) {
 
@@ -195,9 +195,9 @@ void UserApp::update(float dt) {
 	}
 }
 
-void UserApp::render() const {
+void UserApp::render() {
 
-	shader_program.use();
+	shader.use();
 
 	double time = glfwGetTime();
 
@@ -207,55 +207,42 @@ void UserApp::render() const {
 	glm::mat4 model_mat = glm::mat4(1.0);
 	model_mat = glm::translate(model_mat, glm::vec3(0.0, 1.0, 0.0));
 	model_mat = glm::rotate(model_mat, glm::radians(float(sin(time + 1) * 90.0f)), glm::vec3(1.0f, 0.0f, 0.0f));
-	GLint loc = glGetUniformLocation(shader_program.get_id(), "model_mat");
-	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model_mat));
-
-	loc = glGetUniformLocation(shader_program.get_id(), "view_mat");
-	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(camera.get_view_matrix()));
+	shader.setUniformMat4("model_mat", model_mat);
+	shader.setUniformMat4("view_mat", camera.get_view_matrix());
 
 	const glm::mat4 projection_mat =
 		glm::perspective(glm::radians(45.0), DEFAULT_WINDOW_WIDTH * 1.0 / DEFAULT_WINDOW_HEIGHT, 0.1, 100.0);
-	loc = glGetUniformLocation(shader_program.get_id(), "projection_mat");
-	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(projection_mat));
+	shader.setUniformMat4("projection_mat", projection_mat);
 
-	loc = glGetUniformLocation(shader_program.get_id(), "light_color");
-	glUniform3fv(loc, 1, glm::value_ptr(glm::vec3(0.75f, 1.0f, 0.7f)));
-
-	loc = glGetUniformLocation(shader_program.get_id(), "light_pos");
-	glUniform3fv(loc, 1, glm::value_ptr(light_pos));
-
-	loc = glGetUniformLocation(shader_program.get_id(), "camera_origin");
-	glUniform3fv(loc, 1, glm::value_ptr(camera.get_origin()));
+	shader.setUniformVec3("light_color", glm::vec3(0.75f, 1.0f, 0.7f));
+	shader.setUniformVec3("light_pos", light_pos);
+	shader.setUniformVec3("camera_origin", camera.get_origin());
 
 	glBindVertexArray(cube_vao);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, duck.get_id());
-	glUniform1i(glGetUniformLocation(shader_program.get_id(), "tex"), 0);
+	shader.setUniformTexture("tex", 0);
 	glDrawArrays(GL_TRIANGLES, 0, 3 * 2 * 6);
 
 	// ------ draw ground
 	model_mat = glm::mat4(1.0);
-	loc = glGetUniformLocation(shader_program.get_id(), "model_mat");
-	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model_mat));
+	shader.setUniformMat4("model_mat", model_mat);
 
 	glBindVertexArray(ground_vao);
-	glActiveTexture(GL_TEXTURE1);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, grass.get_id());
-	glUniform1i(glGetUniformLocation(shader_program.get_id(), "tex"), 1);
+	shader.setUniformTexture("tex", 0);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	// ------ draw light source
-	light_shader_program.use();
+	light_shader.use();
 
 	model_mat = glm::mat4(1.0);
 	model_mat = glm::translate(model_mat, light_pos);
 	model_mat = glm::scale(model_mat, glm::vec3(0.25f, 0.25f, 0.25f));
-	loc = glGetUniformLocation(light_shader_program.get_id(), "model_mat");
-	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(model_mat));
-	loc = glGetUniformLocation(light_shader_program.get_id(), "view_mat");
-	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(camera.get_view_matrix()));
-	loc = glGetUniformLocation(light_shader_program.get_id(), "projection_mat");
-	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(projection_mat));
+	light_shader.setUniformMat4("model_mat", model_mat);
+	light_shader.setUniformMat4("view_mat", camera.get_view_matrix());
+	light_shader.setUniformMat4("projection_mat", projection_mat);
 
 	glBindVertexArray(light_vao);
 	glDrawArrays(GL_TRIANGLES, 0, 3 * 2 * 6);

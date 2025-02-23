@@ -3,7 +3,9 @@
 #include "gl3.h"
 #include "util/error.h"
 
+#include <GLES3/gl3.h>
 #include <fstream>
+#include <glm/gtc/type_ptr.hpp>
 
 // reference to one vertext shader or fragment shader
 class SingleShader : public GLObject {
@@ -90,6 +92,21 @@ Shader& Shader::operator=(Shader&& another) {
 }
 
 void Shader::use() const { glUseProgram(id); }
+
+void Shader::setUniformVec3(const char* name, const glm::vec3& value) {
+	GLint loc = glGetUniformLocation(id, name);
+	glUniform3fv(loc, 1, glm::value_ptr(value));
+}
+
+void Shader::setUniformMat4(const char* name, const glm::mat4& value) {
+	GLint loc = glGetUniformLocation(id, name);
+	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(value));
+}
+
+void Shader::setUniformTexture(const char* name, GLint texture_id) {
+	GLint loc = glGetUniformLocation(id, name);
+	glUniform1i(loc, texture_id);
+}
 
 Shader::~Shader() {
 	if (this->id != GLObject::ID_NONE) {
