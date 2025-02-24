@@ -3,7 +3,6 @@
 #include "gl3.h"
 #include "util/error.h"
 
-#include <GLES3/gl3.h>
 #include <fstream>
 #include <glm/gtc/type_ptr.hpp>
 
