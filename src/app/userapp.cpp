@@ -249,5 +249,4 @@ void UserApp::render() {
 	glDrawArrays(GL_TRIANGLES, 0, 3 * 2 * 6);
 	// ------ swap buffer
 	glfwSwapBuffers(window);
-	glBindVertexArray(0);
 }
