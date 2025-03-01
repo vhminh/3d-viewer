@@ -10,12 +10,16 @@
 #include <assimp/scene.h>
 #include <vector>
 
-struct Mesh {
+class Mesh {
+public:
 	Mesh(std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices);
 	NO_COPY(Mesh);
 	MOVE(Mesh);
-	std::vector<Vertex> vertices;
-	std::vector<GLuint> indices;
 
 	void render(Shader& shader, const Camera& camera) const;
+
+private:
+	std::vector<Vertex> vertices;
+	std::vector<GLuint> indices;
+	GLuint vb, va, eb;
 };
