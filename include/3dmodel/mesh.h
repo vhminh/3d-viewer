@@ -1,9 +1,11 @@
 #pragma once
 
 #include "3dmodel/vertex.h"
+#include "app/camera.h"
+#include "glwrapper/shader.h"
 #include "util/macro.h"
 
-#include <OpenGL/gltypes.h>
+#include <GL/gl.h>
 #include <assimp/mesh.h>
 #include <assimp/scene.h>
 #include <vector>
@@ -14,4 +16,6 @@ struct Mesh {
 	MOVE(Mesh);
 	std::vector<Vertex> vertices;
 	std::vector<GLuint> indices;
+
+	void render(Shader& shader, const Camera& camera) const;
 };

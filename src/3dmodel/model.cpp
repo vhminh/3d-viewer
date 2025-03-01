@@ -52,3 +52,9 @@ Mesh create_mesh(const aiScene* scene, const aiMesh* mesh) {
 Vertex create_vertex(const aiVector3D& position, const aiVector3D& normal) {
 	return Vertex(glm::vec3(position.x, position.y, position.z), glm::vec3(normal.x, normal.y, normal.z));
 }
+
+void Model::render(Shader& shader, const Camera& camera) const {
+	for (const Mesh& mesh : this->meshes) {
+		mesh.render(shader, camera);
+	}
+}

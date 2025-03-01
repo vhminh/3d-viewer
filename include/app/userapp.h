@@ -29,4 +29,9 @@ private:
 
 	double update_fps_countdown = 1.0;
 	int frame_count = 0;
+
+	glm::dvec2 last_cursor_pos;
+	bool has_last_cursor = false;
+	void process_camera_keyboard_input(float dt);
+	void process_camera_mouse_input(float dt);
 };

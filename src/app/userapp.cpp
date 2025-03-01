@@ -12,8 +12,9 @@ UserApp::UserApp(const std::string& title, int width, int height)
 	  shader(Shader::create("resource/shader/simple.v.glsl", "resource/shader/simple.f.glsl")),
 	  light_shader(Shader::create("resource/shader/simple.v.glsl", "resource/shader/light-source.f.glsl")),
 	  duck(Texture::create("resource/texture/duck.jpg")), grass(Texture::create("resource/texture/grass.png")),
-	  camera(window, glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0) {
+	  camera(glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0) {
 
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	cam_pos = glm::vec3(0.0f, 0.0f, 1.0f);
 	cam_center = glm::vec3(0.0, 0.0, 0.0);
 
@@ -175,6 +176,57 @@ UserApp::UserApp(const std::string& title, int width, int height)
 	glEnableVertexAttribArray(0);
 }
 
+void UserApp::process_camera_keyboard_input(float dt) {
+	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 control_dir = glm::vec3(0.0f, 0.0f, 0.0f);
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		control_dir.z -= 1.0f;
+	}
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		control_dir.z += 1.0f;
+	}
+	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		control_dir.x -= 1.0f;
+	}
+	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		control_dir.x += 1.0f;
+	}
+	if (glm::length(control_dir) < EPSILON) {
+		// no control input
+		return;
+	}
+	control_dir = glm::normalize(control_dir);
+	glm::vec3 direction = camera.get_direction();
+	glm::vec3 move_vec = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 facing_dir_2D = glm::vec3(direction.x, 0.0, direction.z); // facing direction without the y-axis
+	if (glm::length(facing_dir_2D) < EPSILON) {
+		// looking at the sky or the ground
+		return;
+	}
+	facing_dir_2D = glm::normalize(facing_dir_2D);
+	move_vec += glm::normalize(glm::cross(facing_dir_2D, up)) * control_dir.x * CAMERA_SPEED * dt;
+	move_vec += -facing_dir_2D * control_dir.z * CAMERA_SPEED * dt;
+	camera.origin += move_vec;
+}
+
+void UserApp::process_camera_mouse_input(float dt) {
+	double x, y;
+	glfwGetCursorPos(window, &x, &y);
+	glm::dvec2 cur_cursor_pos = glm::dvec2(x, y);
+	if (!has_last_cursor) {
+		has_last_cursor = true;
+		last_cursor_pos = cur_cursor_pos;
+		return;
+	}
+
+	glm::dvec2 diff = cur_cursor_pos - last_cursor_pos;
+	camera.yaw += CAMERA_ROTATION_SPEED * diff.x;
+	camera.pitch -= CAMERA_ROTATION_SPEED * diff.y;
+	camera.pitch = glm::clamp(camera.pitch, -45.0, 45.0);
+
+	last_cursor_pos = cur_cursor_pos;
+}
+
 void UserApp::process_input(float dt) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
@@ -182,7 +234,8 @@ void UserApp::process_input(float dt) {
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
-	camera.process_input(dt);
+	process_camera_keyboard_input(dt);
+	process_camera_mouse_input(dt);
 }
 
 void UserApp::update(float dt) {
@@ -217,7 +270,7 @@ void UserApp::render() {
 
 	shader.setUniformVec3("light_color", glm::vec3(0.75f, 1.0f, 0.7f));
 	shader.setUniformVec3("light_pos", light_pos);
-	shader.setUniformVec3("camera_origin", camera.get_origin());
+	shader.setUniformVec3("camera_origin", camera.origin);
 
 	glBindVertexArray(cube_vao);
 	glActiveTexture(GL_TEXTURE0);
