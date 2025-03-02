@@ -7,13 +7,13 @@
 
 #include <glm/glm.hpp>
 
-class UserApp : public App {
+class SpinningDuckApp : public App {
 public:
-	NO_COPY(UserApp);
-	UserApp(const std::string& title, int width, int height);
-	virtual void process_input(float dt);
-	virtual void update(float dt);
-	virtual void render();
+	NO_COPY(SpinningDuckApp);
+	SpinningDuckApp(const char* title, int width, int height);
+	virtual void process_input(float dt) override;
+	virtual void update(float dt) override;
+	virtual void render() override;
 
 private:
 	Camera camera;
@@ -24,8 +24,6 @@ private:
 	Shader light_shader;
 	Texture duck, grass;
 	unsigned vert_arr_id;
-	glm::vec3 cam_pos;
-	glm::vec3 cam_center;
 
 	double update_fps_countdown = 1.0;
 	int frame_count = 0;

@@ -1,14 +1,13 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
-#include <string>
 #include <tuple>
 #include <util/macro.h>
 
 class App {
 public:
 	NO_COPY(App);
-	App(const std::string& title, int width, int height);
+	App(const char* title, int width, int height);
 	virtual bool should_close() const;
 	virtual void process_input(float dt) = 0;
 	virtual void update(float dt) = 0;

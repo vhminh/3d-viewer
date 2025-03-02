@@ -6,7 +6,7 @@ void on_framebuffer_resize(GLFWwindow* window, int new_width, int new_height) {
 	glViewport(0, 0, new_width, new_height);
 }
 
-App::App(const std::string& title, int width, int height) {
+App::App(const char* title, int width, int height) {
 	// Init GLFW
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -14,7 +14,7 @@ App::App(const std::string& title, int width, int height) {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Create window
-	window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+	window = glfwCreateWindow(width, height, title, nullptr, nullptr);
 	if (window == nullptr) {
 		throw WindowCreationException("Failed to create GLFW window");
 	}

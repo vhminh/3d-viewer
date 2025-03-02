@@ -1,4 +1,4 @@
-#include "app/userapp.h"
+#include "app/spinning_duck_app.h"
 
 #include "app/config.h"
 #include "gl3.h"
@@ -6,17 +6,17 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <string>
 
-UserApp::UserApp(const std::string& title, int width, int height)
+SpinningDuckApp::SpinningDuckApp(const char* title, int width, int height)
 	: App(title, width, height),
-	  shader(Shader::create("resource/shader/simple.v.glsl", "resource/shader/simple.f.glsl")),
-	  light_shader(Shader::create("resource/shader/simple.v.glsl", "resource/shader/light-source.f.glsl")),
-	  duck(Texture::create("resource/texture/duck.jpg")), grass(Texture::create("resource/texture/grass.png")),
+	  shader(Shader::create("resource/shader/spinning_duck.v.glsl", "resource/shader/spinning_duck.f.glsl")),
+	  light_shader(Shader::create("resource/shader/spinning_duck.v.glsl", "resource/shader/white.f.glsl")),
+	  duck(Texture::create("resource/texture/duck.jpg", TextureType::AMBIENT)),
+	  grass(Texture::create("resource/texture/grass.png", TextureType::AMBIENT)),
 	  camera(glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0) {
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	cam_pos = glm::vec3(0.0f, 0.0f, 1.0f);
-	cam_center = glm::vec3(0.0, 0.0, 0.0);
 
 	glGenVertexArrays(1, &cube_vao);
 	glGenVertexArrays(1, &ground_vao);
@@ -176,7 +176,7 @@ UserApp::UserApp(const std::string& title, int width, int height)
 	glEnableVertexAttribArray(0);
 }
 
-void UserApp::process_camera_keyboard_input(float dt) {
+void SpinningDuckApp::process_camera_keyboard_input(float dt) {
 	glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 	glm::vec3 control_dir = glm::vec3(0.0f, 0.0f, 0.0f);
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
@@ -209,7 +209,7 @@ void UserApp::process_camera_keyboard_input(float dt) {
 	camera.origin += move_vec;
 }
 
-void UserApp::process_camera_mouse_input(float dt) {
+void SpinningDuckApp::process_camera_mouse_input(float dt) {
 	double x, y;
 	glfwGetCursorPos(window, &x, &y);
 	glm::dvec2 cur_cursor_pos = glm::dvec2(x, y);
@@ -227,7 +227,7 @@ void UserApp::process_camera_mouse_input(float dt) {
 	last_cursor_pos = cur_cursor_pos;
 }
 
-void UserApp::process_input(float dt) {
+void SpinningDuckApp::process_input(float dt) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
@@ -238,7 +238,7 @@ void UserApp::process_input(float dt) {
 	process_camera_mouse_input(dt);
 }
 
-void UserApp::update(float dt) {
+void SpinningDuckApp::update(float dt) {
 	update_fps_countdown -= dt;
 	frame_count += 1;
 	if (update_fps_countdown < 0.0) {
@@ -249,7 +249,7 @@ void UserApp::update(float dt) {
 	}
 }
 
-void UserApp::render() {
+void SpinningDuckApp::render() {
 
 	shader.use();
 

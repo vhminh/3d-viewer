@@ -1,12 +1,14 @@
-#include "app/config.h"
-#include "app/userapp.h"
-#include "stb_image.h"
-
 #include "3dmodel/model.h"
+#include "app/3dviewer.h"
+#include "app/config.h"
+#include "app/spinning_duck_app.h"
+#include "stb_image.h"
 
 int main() {
 
-	UserApp app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
+	SpinningDuckApp app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
+	/* X3DViewer app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, */
+	/*               "/home/minh/Downloads/New_Sponza/New_Sponza_001.gltf"); */
 
 	/* Model model("/home/minh/Downloads/New_Sponza/New_Sponza_001.gltf"); */
 	/* Model model("/Users/mvu/Downloads/New_Sponza/New_Sponza_001.gltf"); */
