@@ -2,6 +2,8 @@
 #include "glwrapper/gl_object.h"
 #include "util/macro.h"
 
+#include <string>
+
 enum TextureType {
 	NORMALS = 0,
 	AMBIENT,
@@ -19,9 +21,11 @@ public:
 	                      int min_filter = GL_LINEAR, int mag_filter = GL_LINEAR);
 	virtual ~Texture();
 
+	const std::string& get_path() const;
 	TextureType get_type() const;
 
 private:
-	Texture(GLuint id, TextureType type);
+	Texture(GLuint id, const char* path, TextureType type);
+	std::string path;
 	TextureType type;
 };

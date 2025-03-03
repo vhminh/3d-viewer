@@ -19,8 +19,13 @@ public:
 	void render(Shader& shader, const Camera& camera) const;
 
 private:
+	const std::string directory;
 	Assimp::Importer importer;
 	std::vector<Mesh> meshes;
 	std::vector<Material> materials;
 	std::vector<Texture> textures;
+
+	Mesh create_mesh(const aiScene* scene, const aiMesh* mesh);
+	Material create_material(const aiScene* scene, const aiMaterial* material);
+	Texture* load_texture(const aiScene* scene, TextureType type, const char* rel_path);
 };

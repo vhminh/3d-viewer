@@ -4,8 +4,7 @@
 
 X3DViewer::X3DViewer(const char* title, int width, int height, const char* model_path)
 	: App(title, width, height),
-	  shader(Shader::create("resource/shader/spinning_duck.v.glsl", "resource/shader/spinning_duck.f.glsl")),
-	  light_shader(Shader::create("resource/shader/spinning_duck.v.glsl", "resource/shader/white.f.glsl")),
+	  shader(Shader::create("resource/shader/3d_viewer.v.glsl", "resource/shader/3d_viewer.f.glsl")),
 	  camera(glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0), model(model_path) {
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
@@ -83,4 +82,7 @@ void X3DViewer::update(float dt) {
 	}
 }
 
-void X3DViewer::render() { model.render(shader, camera); }
+void X3DViewer::render() {
+	model.render(shader, camera);
+	glfwSwapBuffers(window);
+}

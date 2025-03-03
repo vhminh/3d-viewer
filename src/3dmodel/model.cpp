@@ -4,36 +4,46 @@
 #include "assimp/material.h"
 #include "assimp/types.h"
 
+#include <OpenGL/gl.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <iostream>
 #include <vector>
 
-Mesh create_mesh(const aiScene* scene, const aiMesh* mesh);
 Vertex create_vertex(const aiVector3D& position, const aiVector3D& normal,
                      const std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords);
-Material create_material(const aiScene* scene, const aiMaterial* material, const std::string& directory);
 
 glm::vec3 to_vec3(const aiColor3D& color) { return glm::vec3(color.r, color.g, color.b); }
 
 glm::vec3 to_vec3(const aiVector3D& vec) { return glm::vec3(vec.x, vec.y, vec.z); }
 
-Model::Model(const char* path) {
+std::string directory_of(const char* path) {
+	std::string directory = std::string(path);
+	directory.erase(directory.find_last_of('/'));
+	return directory;
+}
+
+Model::Model(const char* path) : directory(directory_of(path)) {
 	const aiScene* scene =
 		importer.ReadFile(path, aiProcess_CalcTangentSpace | aiProcess_FlipUVs | aiProcess_Triangulate |
 	                                aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
-	const aiNode* root = scene->mRootNode; // TODO: multiple nodes
-	this->meshes.reserve(root->mNumMeshes);
-	for (unsigned i = 0; i < root->mNumMeshes; ++i) {
-		unsigned mesh_idx = root->mMeshes[i];
-		this->meshes.emplace_back(create_mesh(scene, scene->mMeshes[mesh_idx]));
+
+	std::stack<aiNode*, std::vector<aiNode*>> stack;
+	stack.push(scene->mRootNode);
+	while (stack.size()) {
+		aiNode* node = stack.top();
+		stack.pop();
+
+		for (unsigned i = 0; i < node->mNumMeshes; ++i) {
+			unsigned mesh_idx = node->mMeshes[i];
+			this->meshes.emplace_back(create_mesh(scene, scene->mMeshes[mesh_idx]));
+		}
+
+		for (int i = 0; i < node->mNumChildren; ++i) {
+			stack.push(node->mChildren[i]);
+		}
 	}
-	this->materials.reserve(scene->mNumMaterials);
-	std::string directory = std::string(path);
-	directory.erase(directory.find_last_of('/'));
-	for (unsigned i = 0; i < scene->mNumMaterials; ++i) {
-		this->materials.emplace_back(create_material(scene, scene->mMaterials[i], directory));
-	}
+
 	std::cout << "lights: " << scene->HasLights() << " " << scene->mNumLights << std::endl;
 	std::cout << "cameras: " << scene->HasCameras() << " " << scene->mNumCameras << std::endl;
 	std::cout << "materials: " << scene->HasMaterials() << " " << scene->mNumMaterials << std::endl;
@@ -41,17 +51,18 @@ Model::Model(const char* path) {
 	std::cout << "animations: " << scene->HasAnimations() << " " << scene->mNumAnimations << std::endl;
 }
 
-Mesh create_mesh(const aiScene* scene, const aiMesh* mesh) {
+Mesh Model::create_mesh(const aiScene* scene, const aiMesh* mesh) {
 	std::vector<Vertex> vertices;
 	vertices.reserve(mesh->mNumVertices);
-	for (unsigned i = 0; i < mesh->mNumVertices; ++i) {
+	for (int i = 0; i < mesh->mNumVertices; ++i) {
 		std::array<glm::vec2, AI_MAX_NUMBER_OF_TEXTURECOORDS> tex_coords;
-		for (unsigned j = 0; j < AI_MAX_NUMBER_OF_TEXTURECOORDS; ++j) {
-			aiVector3D coord = mesh->mTextureCoords[j][i];
+		for (int j = 0; j < AI_MAX_NUMBER_OF_TEXTURECOORDS; ++j) {
+			aiVector3D coord = mesh->mTextureCoords[/* j */ 0][i]; // TODO: multi uv channels
 			tex_coords[j] = glm::vec2(coord.x, coord.y);
 		}
 		vertices.emplace_back(create_vertex(mesh->mVertices[i], mesh->mNormals[i], tex_coords));
 	}
+
 	std::vector<GLuint> indices;
 	indices.reserve(mesh->mNumFaces * 3);
 	for (int i = 0; i < mesh->mNumFaces; ++i) {
@@ -61,17 +72,19 @@ Mesh create_mesh(const aiScene* scene, const aiMesh* mesh) {
 			continue;
 		}
 		for (int i = 0; i < 3; ++i) {
-			unsigned int index = face.mIndices[index];
+			unsigned int index = face.mIndices[i];
 			indices.push_back(index);
 		}
 	}
 	indices.shrink_to_fit();
-	return Mesh(std::move(vertices), std::move(indices));
+
+	Material material = create_material(scene, scene->mMaterials[mesh->mMaterialIndex]);
+	return Mesh(std::move(vertices), std::move(indices), std::move(material));
 }
 
 Vertex create_vertex(const aiVector3D& position, const aiVector3D& normal,
                      const std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords) {
-	return Vertex(to_vec3(position), to_vec3(normal), tex_coords);
+	return Vertex(to_vec3(position), to_vec3(normal), tex_coords[0]); // TODO: multiple uv channels
 }
 
 std::ostream& operator<<(std::ostream& os, const aiColor3D& color) {
@@ -107,7 +120,7 @@ aiTextureType to_ai_texture_type(const TextureType type) {
 	assert(false);
 }
 
-Material create_material(const aiScene* scene, const aiMaterial* material, const std::string& directory) {
+Material Model::create_material(const aiScene* scene, const aiMaterial* material) {
 	aiColor3D ambient, diffuse, specular;
 	material->Get(AI_MATKEY_COLOR_AMBIENT, ambient);
 	material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
@@ -117,7 +130,8 @@ Material create_material(const aiScene* scene, const aiMaterial* material, const
 	material->Get(AI_MATKEY_SHININESS_STRENGTH, shininess_strength);
 	std::cout << "ambient: " << ambient << ", diffuse: " << diffuse << ", specular: " << specular
 			  << ", shininess: " << shininess << ", shininess_strength: " << shininess_strength << std::endl;
-	std::vector<Texture> textures;
+
+	std::vector<Texture*> textures;
 	for (int i = 0; i < TextureType::COUNT; ++i) {
 		TextureType type = TextureType(i);
 		aiTextureType ai_type = to_ai_texture_type(type);
@@ -125,19 +139,28 @@ Material create_material(const aiScene* scene, const aiMaterial* material, const
 		for (int j = 0; j < count; ++j) {
 			aiString rel_path; // path relative to main model file
 			material->GetTexture(ai_type, j, &rel_path);
-			std::string path = directory + "/" + rel_path.C_Str();
-
-			const aiTexture* embedded_texture = scene->GetEmbeddedTexture(rel_path.C_Str());
-			std::cout << "texture " << type << " " << rel_path.C_Str() << std::endl;
-			if (embedded_texture) {
-				std::cerr << "TODO: load embedded texture " << type << " " << rel_path.C_Str() << std::endl;
-			} else {
-				Texture texture = Texture::create(path.c_str(), type);
-				textures.emplace_back(std::move(texture));
-			}
+			textures.push_back(this->load_texture(scene, type, rel_path.C_Str()));
 		}
 	}
-	return Material(to_vec3(ambient), to_vec3(diffuse), to_vec3(specular), shininess, shininess_strength);
+
+	return Material(to_vec3(ambient), to_vec3(diffuse), to_vec3(specular), shininess, shininess_strength, textures);
+}
+
+Texture* Model::load_texture(const aiScene* scene, TextureType type, const char* rel_path) {
+	std::string path = directory + "/" + rel_path;
+	for (int i = 0; i < this->textures.size(); ++i) {
+		if (path == this->textures[i].get_path()) {
+			return &this->textures[i];
+		}
+	}
+	std::cerr << "load texture " << type << " " << rel_path << std::endl;
+	const aiTexture* embedded_texture = scene->GetEmbeddedTexture(rel_path);
+	if (embedded_texture) {
+		std::cerr << "TODO: load embedded texture " << type << " " << rel_path << std::endl;
+		return nullptr;
+	}
+	Texture texture = Texture::create(path.c_str(), type);
+	return &this->textures.emplace_back(std::move(texture));
 }
 
 void Model::render(Shader& shader, const Camera& camera) const {

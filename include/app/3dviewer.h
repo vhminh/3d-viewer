@@ -16,7 +16,6 @@ public:
 private:
 	Camera camera;
 	Shader shader;
-	Shader light_shader;
 	Model model;
 
 	double update_fps_countdown = 1.0;

@@ -10,6 +10,6 @@
 struct Vertex {
 	glm::vec3 position;
 	glm::vec3 normal;
-	std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords;
-	Vertex(glm::vec3 position, glm::vec3 normal, std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords);
+	glm::vec2 tex_coord; // TODO: multiple uv channels
+	Vertex(glm::vec3 position, glm::vec3 normal, glm::vec2 tex_coord);
 };

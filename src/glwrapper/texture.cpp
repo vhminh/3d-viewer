@@ -5,7 +5,7 @@
 #include "stb_image.h"
 #include "util/error.h"
 
-Texture::Texture(GLuint id, TextureType type) : GLObject(id), type(type) {}
+Texture::Texture(GLuint id, const char* path, TextureType type) : GLObject(id), path(path), type(type) {}
 
 Texture Texture::create(const char* path, TextureType type, int wrap_s, int wrap_t, int min_filter, int mag_filter) {
 	// texture wrap
@@ -30,10 +30,12 @@ Texture Texture::create(const char* path, TextureType type, int wrap_s, int wrap
 	glGenerateMipmap(GL_TEXTURE_2D);
 	stbi_image_free(data);
 
-	return Texture(id, type);
+	return Texture(id, path, type);
 }
 
-Texture::Texture(Texture&& another) : GLObject(another.id), type(another.type) { another.id = ID_NONE; }
+Texture::Texture(Texture&& another) : GLObject(another.id), path(std::move(another.path)), type(another.type) {
+	another.id = ID_NONE;
+}
 
 Texture& Texture::operator=(Texture&& another) {
 	if (this == &another) {
@@ -44,6 +46,7 @@ Texture& Texture::operator=(Texture&& another) {
 	}
 	this->id = another.id;
 	this->type = another.type;
+	this->path = std::move(another.path);
 	another.id = ID_NONE;
 	return *this;
 }
@@ -53,5 +56,7 @@ Texture::~Texture() {
 		glDeleteTextures(1, &this->id);
 	}
 }
+
+const std::string& Texture::get_path() const { return this->path; }
 
 TextureType Texture::get_type() const { return this->type; }
