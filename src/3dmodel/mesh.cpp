@@ -47,6 +47,20 @@ void Mesh::render(Shader& shader, const Camera& camera) const {
 		glm::perspective(glm::radians(45.0), DEFAULT_WINDOW_WIDTH * 1.0 / DEFAULT_WINDOW_HEIGHT, 0.1, 100.0);
 	shader.setUniformMat4("projection_mat", projection_mat);
 
+	for (const Texture* texture : material.textures) {
+		if (texture->get_type() == TextureType::AMBIENT) {
+			shader.setUniformTexture("ambient_map_0", texture->get_id());
+			break;
+		}
+		if (texture->get_type() == TextureType::DIFFUSE) {
+			// TODO: multi texture support
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, texture->get_id());
+			shader.setUniformTexture("diffuse_map_0", 0);
+			break;
+		}
+	}
+
 	glBindVertexArray(va);
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0); // unbind

@@ -1,8 +1,13 @@
 #version 330 core
 
-in vec3 pos;
-out vec3 f_out;
+in vec2 f_tex_coord;
+out vec4 f_out;
+
+uniform sampler2D ambient_map_0;
+uniform sampler2D diffuse_map_0;
 
 void main() {
-	f_out = vec3(1.0, 1.0, 1.0);
+	// f_out = texture(ambient_map_0, f_tex_coord) + texture(diffuse_map_0, f_tex_coord);
+	f_out = texture(diffuse_map_0, f_tex_coord);
 }
+
