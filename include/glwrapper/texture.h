@@ -19,13 +19,13 @@ public:
 	MOVE(Texture);
 	static Texture create(const char* path, TextureType type, int wrap_s = GL_REPEAT, int wrap_t = GL_REPEAT,
 	                      int min_filter = GL_LINEAR, int mag_filter = GL_LINEAR);
+	static Texture create(unsigned char* data, int w, int h, int n_channels, TextureType type, int wrap_s = GL_REPEAT, int wrap_t = GL_REPEAT,
+	                      int min_filter = GL_LINEAR, int mag_filter = GL_LINEAR);
 	virtual ~Texture();
 
-	const std::string& get_path() const;
 	TextureType get_type() const;
 
 private:
-	Texture(GLuint id, const char* path, TextureType type);
-	std::string path;
+	Texture(GLuint id, TextureType type);
 	TextureType type;
 };

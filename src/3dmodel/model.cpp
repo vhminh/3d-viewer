@@ -160,21 +160,36 @@ Material Model::create_material(const aiScene* scene, const aiMaterial* material
 	return Material(to_vec3(ambient), to_vec3(diffuse), to_vec3(specular), shininess, shininess_strength, textures);
 }
 
+std::tuple<std::vector<unsigned char>, int, int, int> texture_data(const aiTexture* tex) {
+	if (tex->mHeight == 0) {
+		std::cerr << "TODO: support compressed embedded texture" << std::endl;
+		return std::make_tuple<std::vector<unsigned char>, int, int, int>(std::vector<unsigned char>(), 0, 0, 0);
+	} else {
+		std::vector<unsigned char> data(tex->mWidth * tex->mHeight * 3);
+		std::cerr << "TODO: fill data for embedded texture" << std::endl;
+		return std::make_tuple(data, tex->mWidth, tex->mHeight, 3);
+	}
+}
+
 Texture* Model::load_texture(const aiScene* scene, TextureType type, const char* rel_path) {
 	std::string path = directory + "/" + rel_path;
-	for (int i = 0; i < this->textures.size(); ++i) {
-		if (path == this->textures[i].get_path()) {
-			return &this->textures[i];
-		}
+	if (texture_by_path.contains(path)) {
+		return texture_by_path.at(path);
 	}
 	std::cerr << "load texture " << type << " " << rel_path << std::endl;
 	const aiTexture* embedded_texture = scene->GetEmbeddedTexture(rel_path);
 	if (embedded_texture) {
-		std::cerr << "TODO: load embedded texture " << type << " " << rel_path << std::endl;
-		return nullptr;
+		auto [data, w, h, n_channels] = texture_data(embedded_texture);
+		Texture texture = Texture::create(data.data(), w, h, n_channels, type);
+		Texture* ptr = &this->textures.emplace_back(std::move(texture));
+		texture_by_path[path] = ptr;
+		return ptr;
+	} else {
+		Texture texture = Texture::create(path.c_str(), type);
+		Texture* ptr = &this->textures.emplace_back(std::move(texture));
+		texture_by_path[path] = ptr;
+		return ptr;
 	}
-	Texture texture = Texture::create(path.c_str(), type);
-	return &this->textures.emplace_back(std::move(texture));
 }
 
 void Model::render(Shader& shader, const Camera& camera) const {

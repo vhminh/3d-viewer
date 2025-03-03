@@ -8,6 +8,7 @@
 #include "util/macro.h"
 
 #include <assimp/Importer.hpp>
+#include <map>
 #include <vector>
 
 class Model {
@@ -24,6 +25,7 @@ private:
 	std::vector<Mesh> meshes;
 	std::vector<Material> materials;
 	std::vector<Texture> textures;
+	std::map<std::string, Texture*> texture_by_path;
 
 	Mesh create_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat4& transform);
 	Material create_material(const aiScene* scene, const aiMaterial* material);
