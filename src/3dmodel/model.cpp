@@ -2,6 +2,7 @@
 
 #include "3dmodel/mesh.h"
 #include "assimp/material.h"
+#include "assimp/matrix4x4.h"
 #include "assimp/types.h"
 
 #include <OpenGL/gl.h>
@@ -17,6 +18,17 @@ glm::vec3 to_vec3(const aiColor3D& color) { return glm::vec3(color.r, color.g, c
 
 glm::vec3 to_vec3(const aiVector3D& vec) { return glm::vec3(vec.x, vec.y, vec.z); }
 
+glm::mat4 to_mat4(const aiMatrix4x4& mat) {
+	// clang-format off
+	return glm::mat4(
+		mat.a1, mat.b1, mat.c1, mat.d1,
+		mat.a2, mat.b2, mat.c2, mat.d2,
+		mat.a3, mat.b3, mat.c3, mat.d3,
+		mat.a4, mat.b4, mat.c4, mat.d4
+	);
+	// clang-format on
+}
+
 std::string directory_of(const char* path) {
 	std::string directory = std::string(path);
 	directory.erase(directory.find_last_of('/'));
@@ -28,19 +40,21 @@ Model::Model(const char* path) : directory(directory_of(path)) {
 		importer.ReadFile(path, aiProcess_CalcTangentSpace | aiProcess_FlipUVs | aiProcess_Triangulate |
 	                                aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
 
-	std::stack<aiNode*, std::vector<aiNode*>> stack;
-	stack.push(scene->mRootNode);
+	std::stack<std::pair<aiNode*, glm::mat4>> stack;
+	stack.push(std::make_pair(scene->mRootNode, glm::mat4(1.0)));
 	while (stack.size()) {
-		aiNode* node = stack.top();
+		auto [node, transform] = stack.top();
 		stack.pop();
+
+		glm::mat4 new_transform = to_mat4(node->mTransformation) * transform;
 
 		for (unsigned i = 0; i < node->mNumMeshes; ++i) {
 			unsigned mesh_idx = node->mMeshes[i];
-			this->meshes.emplace_back(create_mesh(scene, scene->mMeshes[mesh_idx]));
+			this->meshes.emplace_back(create_mesh(scene, scene->mMeshes[mesh_idx], new_transform));
 		}
 
 		for (int i = 0; i < node->mNumChildren; ++i) {
-			stack.push(node->mChildren[i]);
+			stack.push(std::make_pair(node->mChildren[i], new_transform));
 		}
 	}
 
@@ -51,7 +65,7 @@ Model::Model(const char* path) : directory(directory_of(path)) {
 	std::cout << "animations: " << scene->HasAnimations() << " " << scene->mNumAnimations << std::endl;
 }
 
-Mesh Model::create_mesh(const aiScene* scene, const aiMesh* mesh) {
+Mesh Model::create_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat4& transform) {
 	std::vector<Vertex> vertices;
 	vertices.reserve(mesh->mNumVertices);
 	for (int i = 0; i < mesh->mNumVertices; ++i) {
@@ -79,7 +93,7 @@ Mesh Model::create_mesh(const aiScene* scene, const aiMesh* mesh) {
 	indices.shrink_to_fit();
 
 	Material material = create_material(scene, scene->mMaterials[mesh->mMaterialIndex]);
-	return Mesh(std::move(vertices), std::move(indices), std::move(material));
+	return Mesh(transform, std::move(vertices), std::move(indices), std::move(material));
 }
 
 Vertex create_vertex(const aiVector3D& position, const aiVector3D& normal,

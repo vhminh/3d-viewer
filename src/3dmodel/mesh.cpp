@@ -6,10 +6,9 @@
 #include "util/util.h"
 
 #include <glm/ext/matrix_clip_space.hpp>
-#include <iostream>
 
-Mesh::Mesh(std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices, Material&& material)
-	: vertices(std::move(vertices)), indices(std::move(indices)), material(std::move(material)) {
+Mesh::Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices, Material&& material)
+	: transform(transform), vertices(std::move(vertices)), indices(std::move(indices)), material(std::move(material)) {
 
 	glGenVertexArrays(1, &va);
 	glBindVertexArray(va);
@@ -32,8 +31,8 @@ Mesh::Mesh(std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices, Materi
 }
 
 Mesh::Mesh(Mesh&& another)
-	: vertices(std::move(another.vertices)), indices(std::move(another.indices)), material(std::move(another.material)),
-	  va(another.va), vb(another.vb), eb(another.eb) {
+	: transform(another.transform), vertices(std::move(another.vertices)), indices(std::move(another.indices)),
+	  material(std::move(another.material)), va(another.va), vb(another.vb), eb(another.eb) {
 	another.va = GLObject::ID_NONE;
 	another.vb = GLObject::ID_NONE;
 	another.eb = GLObject::ID_NONE;
@@ -41,7 +40,7 @@ Mesh::Mesh(Mesh&& another)
 
 void Mesh::render(Shader& shader, const Camera& camera) const {
 	shader.use();
-	shader.setUniformMat4("model_mat", glm::mat4(1.0));
+	shader.setUniformMat4("model_mat", transform);
 	shader.setUniformMat4("view_mat", camera.get_view_matrix());
 	const glm::mat4 projection_mat =
 		glm::perspective(glm::radians(45.0), DEFAULT_WINDOW_WIDTH * 1.0 / DEFAULT_WINDOW_HEIGHT, 0.1, 100.0);

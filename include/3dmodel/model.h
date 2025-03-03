@@ -25,7 +25,7 @@ private:
 	std::vector<Material> materials;
 	std::vector<Texture> textures;
 
-	Mesh create_mesh(const aiScene* scene, const aiMesh* mesh);
+	Mesh create_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat4& transform);
 	Material create_material(const aiScene* scene, const aiMaterial* material);
 	Texture* load_texture(const aiScene* scene, TextureType type, const char* rel_path);
 };

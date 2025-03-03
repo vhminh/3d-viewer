@@ -13,13 +13,14 @@
 
 class Mesh {
 public:
-	Mesh(std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices, Material&& material);
+	Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices, Material&& material);
 	NO_COPY(Mesh);
 	MOVE(Mesh);
 
 	void render(Shader& shader, const Camera& camera) const;
 
 private:
+	glm::mat4 transform; // transformation relative to world
 	std::vector<Vertex> vertices;
 	std::vector<GLuint> indices;
 	Material material;
