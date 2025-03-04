@@ -11,7 +11,7 @@ Texture Texture::create(const char* path, TextureType type, int wrap_s, int wrap
 	// load image
 	int w, h, n_channels;
 	stbi_set_flip_vertically_on_load(true);
-	unsigned char* data = stbi_load(path, &w, &h, &n_channels, 0);
+	unsigned char* data = stbi_load(path, &w, &h, &n_channels, STBI_rgb_alpha); // request rgba
 	if (!data) {
 		throw ImageLoadingException(path);
 	}
@@ -34,7 +34,7 @@ Texture Texture::create(unsigned char* data, int w, int h, int n_channels, Textu
 	GLuint id;
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_2D, id);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	return Texture(id, type);
