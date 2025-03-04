@@ -1,6 +1,7 @@
 #include "3dmodel/model.h"
 
 #include "3dmodel/mesh.h"
+#include "assimp/light.h"
 #include "assimp/material.h"
 #include "assimp/matrix4x4.h"
 #include "assimp/types.h"
@@ -10,6 +11,7 @@
 #include <assimp/scene.h>
 #include <cstdlib>
 #include <iostream>
+#include <stack>
 #include <vector>
 
 Vertex create_vertex(const aiVector3D& position, const aiVector3D& normal,
@@ -41,23 +43,13 @@ Model::Model(const char* path) : directory(directory_of(path)) {
 		importer.ReadFile(path, aiProcess_CalcTangentSpace | aiProcess_FlipUVs | aiProcess_Triangulate |
 	                                aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
 
-	std::stack<std::pair<aiNode*, glm::mat4>> stack;
-	stack.push(std::make_pair(scene->mRootNode, glm::mat4(1.0)));
-	while (stack.size()) {
-		auto [node, transform] = stack.top();
-		stack.pop();
-
-		glm::mat4 new_transform = to_mat4(node->mTransformation) * transform;
-
-		for (unsigned i = 0; i < node->mNumMeshes; ++i) {
-			unsigned mesh_idx = node->mMeshes[i];
-			this->meshes.emplace_back(create_mesh(scene, scene->mMeshes[mesh_idx], new_transform));
-		}
-
-		for (int i = 0; i < node->mNumChildren; ++i) {
-			stack.push(std::make_pair(node->mChildren[i], new_transform));
-		}
+	if (!scene) {
+		std::cerr << "cannot load scene: " << importer.GetErrorString() << std::endl;
 	}
+
+	load_lights(scene);
+
+	load_meshes(scene);
 
 	std::cout << "lights: " << scene->HasLights() << " " << scene->mNumLights << std::endl;
 	std::cout << "cameras: " << scene->HasCameras() << " " << scene->mNumCameras << std::endl;
@@ -66,14 +58,37 @@ Model::Model(const char* path) : directory(directory_of(path)) {
 	std::cout << "animations: " << scene->HasAnimations() << " " << scene->mNumAnimations << std::endl;
 }
 
-Mesh Model::create_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat4& transform) {
+void Model::load_meshes(const aiScene* scene) {
+	std::stack<std::pair<aiNode*, glm::mat4>> stack;
+	stack.push(std::make_pair(scene->mRootNode, glm::mat4(1.0)));
+	while (stack.size()) {
+		auto [node, transform] = stack.top();
+		stack.pop();
+
+		glm::mat4 new_transform = transform * to_mat4(node->mTransformation);
+
+		for (unsigned i = 0; i < node->mNumMeshes; ++i) {
+			unsigned mesh_idx = node->mMeshes[i];
+			this->meshes.emplace_back(load_mesh(scene, scene->mMeshes[mesh_idx], new_transform));
+		}
+
+		for (int i = 0; i < node->mNumChildren; ++i) {
+			stack.push(std::make_pair(node->mChildren[i], new_transform));
+		}
+	}
+}
+
+Mesh Model::load_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat4& transform) {
 	std::vector<Vertex> vertices;
 	vertices.reserve(mesh->mNumVertices);
 	for (int i = 0; i < mesh->mNumVertices; ++i) {
 		std::array<glm::vec2, AI_MAX_NUMBER_OF_TEXTURECOORDS> tex_coords;
 		for (int j = 0; j < AI_MAX_NUMBER_OF_TEXTURECOORDS; ++j) {
-			aiVector3D coord = mesh->mTextureCoords[/* j */ 0][i]; // TODO: multi uv channels
-			tex_coords[j] = glm::vec2(coord.x, coord.y);
+			if (mesh->mTextureCoords[j]) {
+				aiVector3D coord = mesh->mTextureCoords[j][i]; // TODO: multi uv channels
+				tex_coords[j] = glm::vec2(coord.x, coord.y);
+				break; // TODO: multi uv channels
+			}
 		}
 		vertices.emplace_back(create_vertex(mesh->mVertices[i], mesh->mNormals[i], tex_coords));
 	}
@@ -93,7 +108,7 @@ Mesh Model::create_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat
 	}
 	indices.shrink_to_fit();
 
-	Material material = create_material(scene, scene->mMaterials[mesh->mMaterialIndex]);
+	Material material = load_material(scene, scene->mMaterials[mesh->mMaterialIndex]);
 	return Mesh(transform, std::move(vertices), std::move(indices), std::move(material));
 }
 
@@ -131,7 +146,7 @@ aiTextureType to_ai_texture_type(const TextureType type) {
 	assert(false);
 }
 
-Material Model::create_material(const aiScene* scene, const aiMaterial* material) {
+Material Model::load_material(const aiScene* scene, const aiMaterial* material) {
 	aiColor3D ambient, diffuse, specular;
 	material->Get(AI_MATKEY_COLOR_AMBIENT, ambient);
 	material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
@@ -186,6 +201,64 @@ std::shared_ptr<Texture> Model::load_texture(const aiScene* scene, TextureType t
 		this->textures.push_back(ptr);
 		texture_by_path[path] = ptr;
 		return ptr;
+	}
+}
+
+void transforms_by_node_name_helper(const aiNode* node, const glm::mat4& prev_transform,
+                                    std::map<std::string_view, std::vector<glm::mat4>>& result) {
+	std::string_view node_name = std::string_view(node->mName.C_Str());
+	glm::mat4 transform = prev_transform * to_mat4(node->mTransformation);
+	if (node_name.size()) {
+		result[node_name].push_back(prev_transform * to_mat4(node->mTransformation));
+	}
+	for (int i = 0; i < node->mNumChildren; ++i) {
+		transforms_by_node_name_helper(node->mChildren[i], transform, result);
+	}
+}
+
+std::map<std::string_view, std::vector<glm::mat4>> transforms_by_node_name(const aiScene* scene) {
+	std::map<std::string_view, std::vector<glm::mat4>> result;
+	transforms_by_node_name_helper(scene->mRootNode, glm::mat4(1.0), result);
+	return result;
+}
+
+void Model::load_lights(const aiScene* scene) {
+	std::map<std::string_view, std::vector<glm::mat4>> transforms_by_name = transforms_by_node_name(scene);
+	for (int i = 0; i < scene->mNumLights; ++i) {
+		aiLight* ai_light = scene->mLights[i];
+		LightColor color = LightColor(to_vec3(ai_light->mColorAmbient), to_vec3(ai_light->mColorDiffuse),
+		                              to_vec3(ai_light->mColorSpecular));
+		Attenuation attenuation =
+			Attenuation(ai_light->mAttenuationConstant, ai_light->mAttenuationLinear, ai_light->mAttenuationQuadratic);
+
+		const std::vector<glm::mat4>& transforms = transforms_by_name[std::string_view(ai_light->mName.C_Str())];
+		if (transforms.empty()) {
+			std::cerr << "cannot find any nodes correspond to light source with name \"" << ai_light->mName.C_Str()
+					  << "\"" << std::endl;
+		}
+		for (const glm::mat4& transform : transforms) {
+			switch (ai_light->mType) {
+			case aiLightSource_DIRECTIONAL: {
+				glm::vec3 rel_dir = to_vec3(ai_light->mDirection);
+				glm::vec4 rel_dir_v4 = glm::vec4(rel_dir.x, rel_dir.y, rel_dir.z, 0.0);
+				glm::vec4 abs_dir_v4 = transform * rel_dir_v4;
+				glm::vec3 abs_dir = glm::vec3(abs_dir_v4.x, abs_dir_v4.y, abs_dir_v4.z);
+				directional_lights.emplace_back(color, attenuation, abs_dir);
+				break;
+			}
+			case aiLightSource_POINT: {
+				glm::vec3 rel_pos = to_vec3(ai_light->mPosition);
+				glm::vec4 rel_pos_v4 = glm::vec4(rel_pos.x, rel_pos.y, rel_pos.z, 1.0);
+				glm::vec4 abs_pos_v4 = transform * rel_pos_v4;
+				glm::vec3 abs_pos = glm::vec3(abs_pos_v4.x, abs_pos_v4.y, abs_pos_v4.z);
+				point_lights.emplace_back(color, attenuation, abs_pos);
+				break;
+			}
+			default: {
+				std::cerr << "unsupported light source " << ai_light->mType << std::endl;
+			}
+			}
+		}
 	}
 }
 

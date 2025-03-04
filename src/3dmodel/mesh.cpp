@@ -6,6 +6,7 @@
 #include "util/util.h"
 
 #include <glm/ext/matrix_clip_space.hpp>
+#include <iostream>
 
 Mesh::Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices, Material&& material)
 	: transform(transform), vertices(std::move(vertices)), indices(std::move(indices)), material(std::move(material)) {
@@ -14,7 +15,6 @@ Mesh::Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLui
 	glBindVertexArray(va);
 	glGenBuffers(1, &vb);
 	glGenBuffers(1, &eb);
-
 	// vertex data
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
 	glBufferData(GL_ARRAY_BUFFER, sizeof_vec_data(this->vertices), this->vertices.data(), GL_STATIC_DRAW);
@@ -38,6 +38,43 @@ Mesh::Mesh(Mesh&& another)
 	another.eb = GLObject::ID_NONE;
 }
 
+void bind_textures(Shader& shader, const std::vector<std::shared_ptr<Texture>>& textures) {
+	int tex_slot = 0;
+	int ambient_count = 0;
+	int diffuse_count = 0;
+	int specular_count = 0;
+	for (const std::shared_ptr<Texture> texture : textures) {
+		char uniform_name[32] = "";
+		switch (texture->get_type()) {
+		case TextureType::AMBIENT: {
+			int n = snprintf(uniform_name, 30, "ambient_map_%d", ambient_count++);
+			assert(n < 30);
+			break;
+		}
+		case TextureType::DIFFUSE: {
+			int n = snprintf(uniform_name, 30, "diffuse_map_%d", diffuse_count++);
+			assert(n < 30);
+			break;
+		}
+		case TextureType::SPECULAR: {
+			int n = snprintf(uniform_name, 30, "specular_map_%d", specular_count++);
+			assert(n < 30);
+			break;
+		}
+		default: {
+			std::cerr << "skip texture of type " << texture->get_type() << std::endl;
+			break;
+		}
+		}
+		if (strlen(uniform_name) > 0) {
+			glActiveTexture(GL_TEXTURE0 + tex_slot);
+			glBindTexture(GL_TEXTURE_2D, texture->get_id());
+			shader.setUniformTexture(uniform_name, tex_slot);
+			tex_slot++;
+		}
+	}
+}
+
 void Mesh::render(Shader& shader, const Camera& camera) const {
 	shader.use();
 	shader.setUniformMat4("model_mat", transform);
@@ -46,26 +83,7 @@ void Mesh::render(Shader& shader, const Camera& camera) const {
 		glm::perspective(glm::radians(45.0), DEFAULT_WINDOW_WIDTH * 1.0 / DEFAULT_WINDOW_HEIGHT, 0.1, 100.0);
 	shader.setUniformMat4("projection_mat", projection_mat);
 
-	GLenum err = 0;
-	int tex_slot = 0;
-	for (const std::shared_ptr<Texture> texture : material.textures) {
-		// TODO: multi texture support
-		switch (texture->get_type()) {
-		case TextureType::AMBIENT: {
-			glActiveTexture(GL_TEXTURE0 + tex_slot);
-			glBindTexture(GL_TEXTURE_2D, texture->get_id());
-			shader.setUniformTexture("ambient_map_0", tex_slot);
-			break;
-		}
-		case TextureType::DIFFUSE: {
-			glActiveTexture(GL_TEXTURE0 + tex_slot);
-			glBindTexture(GL_TEXTURE_2D, texture->get_id());
-			shader.setUniformTexture("diffuse_map_0", tex_slot);
-			break;
-		}
-		}
-		tex_slot++;
-	}
+	bind_textures(shader, material.textures);
 
 	glBindVertexArray(va);
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);

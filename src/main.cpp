@@ -9,10 +9,14 @@ int main() {
 	/* SpinningDuckApp app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT); */
 	/* X3DViewer app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, */
 	/*               "/home/minh/Downloads/New_Sponza/New_Sponza_001.gltf"); */
-	X3DViewer app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT,
-	              "/Users/mvu/Downloads/New_Sponza/New_Sponza_001.gltf");
+	/* X3DViewer app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, */
+	/*               "/Users/mvu/Downloads/New_Sponza/New_Sponza_001.gltf"); */
 	/* X3DViewer app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, */
 	/*               "/Users/mvu/Downloads/uploads_files_2465920_burger_merged.glb"); */
+	X3DViewer app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT,
+	              "/home/minh/projects/glTF-Sample-Assets/Models/Sponza/glTF/Sponza.gltf");
+	/* X3DViewer app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, */
+	/*               "/home/minh/Downloads/Bistro_v5/Bistro_v5_2/BistroExterior.fbx"); */
 
 	double prev_time = glfwGetTime();
 
