@@ -25,7 +25,7 @@ Mesh::Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLui
 
 	// attrib pointers
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
-	glVertexAttribPointer(1, 2, GL_UNSIGNED_INT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tex_coord));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tex_coord));
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 }
@@ -46,18 +46,31 @@ void Mesh::render(Shader& shader, const Camera& camera) const {
 		glm::perspective(glm::radians(45.0), DEFAULT_WINDOW_WIDTH * 1.0 / DEFAULT_WINDOW_HEIGHT, 0.1, 100.0);
 	shader.setUniformMat4("projection_mat", projection_mat);
 
-	for (const Texture* texture : material.textures) {
-		if (texture->get_type() == TextureType::AMBIENT) {
-			shader.setUniformTexture("ambient_map_0", texture->get_id());
-			break;
-		}
-		if (texture->get_type() == TextureType::DIFFUSE) {
-			// TODO: multi texture support
-			glActiveTexture(GL_TEXTURE0);
+	GLenum err = 0;
+	int tex_slot = 0;
+	for (const std::shared_ptr<Texture> texture : material.textures) {
+		// TODO: multi texture support
+		switch (texture->get_type()) {
+		case TextureType::NORMALS: {
+			glActiveTexture(GL_TEXTURE0 + tex_slot);
 			glBindTexture(GL_TEXTURE_2D, texture->get_id());
-			shader.setUniformTexture("diffuse_map_0", 0);
+			shader.setUniformTexture("normal_map", tex_slot);
 			break;
 		}
+		case TextureType::AMBIENT: {
+			glActiveTexture(GL_TEXTURE0 + tex_slot);
+			glBindTexture(GL_TEXTURE_2D, texture->get_id());
+			shader.setUniformTexture("ambient_map_0", tex_slot);
+			break;
+		}
+		case TextureType::DIFFUSE: {
+			glActiveTexture(GL_TEXTURE0 + tex_slot);
+			glBindTexture(GL_TEXTURE_2D, texture->get_id());
+			shader.setUniformTexture("diffuse_map_0", tex_slot);
+			break;
+		}
+		}
+		tex_slot++;
 	}
 
 	glBindVertexArray(va);

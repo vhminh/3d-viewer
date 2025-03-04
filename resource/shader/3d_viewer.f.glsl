@@ -3,7 +3,7 @@
 in vec2 f_tex_coord;
 out vec4 f_out;
 
-uniform sampler2D ambient_map_0;
+uniform sampler2D normal_map;
 uniform sampler2D diffuse_map_0;
 
 void main() {

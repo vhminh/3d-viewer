@@ -145,7 +145,7 @@ Material Model::create_material(const aiScene* scene, const aiMaterial* material
 	std::cout << "ambient: " << ambient << ", diffuse: " << diffuse << ", specular: " << specular
 			  << ", shininess: " << shininess << ", shininess_strength: " << shininess_strength << std::endl;
 
-	std::vector<Texture*> textures;
+	std::vector<std::shared_ptr<Texture>> textures;
 	for (int i = 0; i < TextureType::COUNT; ++i) {
 		TextureType type = TextureType(i);
 		aiTextureType ai_type = to_ai_texture_type(type);
@@ -171,7 +171,7 @@ std::tuple<std::vector<unsigned char>, int, int, int> texture_data(const aiTextu
 	}
 }
 
-Texture* Model::load_texture(const aiScene* scene, TextureType type, const char* rel_path) {
+std::shared_ptr<Texture> Model::load_texture(const aiScene* scene, TextureType type, const char* rel_path) {
 	std::string path = directory + "/" + rel_path;
 	if (texture_by_path.contains(path)) {
 		return texture_by_path.at(path);
@@ -180,13 +180,13 @@ Texture* Model::load_texture(const aiScene* scene, TextureType type, const char*
 	const aiTexture* embedded_texture = scene->GetEmbeddedTexture(rel_path);
 	if (embedded_texture) {
 		auto [data, w, h, n_channels] = texture_data(embedded_texture);
-		Texture texture = Texture::create(data.data(), w, h, n_channels, type);
-		Texture* ptr = &this->textures.emplace_back(std::move(texture));
+		std::shared_ptr<Texture> ptr = std::make_shared<Texture>(Texture::create(data.data(), w, h, n_channels, type));
+		this->textures.push_back(ptr);
 		texture_by_path[path] = ptr;
 		return ptr;
 	} else {
-		Texture texture = Texture::create(path.c_str(), type);
-		Texture* ptr = &this->textures.emplace_back(std::move(texture));
+		std::shared_ptr<Texture> ptr = std::make_shared<Texture>(Texture::create(path.c_str(), type));
+		this->textures.push_back(ptr);
 		texture_by_path[path] = ptr;
 		return ptr;
 	}

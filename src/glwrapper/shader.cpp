@@ -102,9 +102,9 @@ void Shader::setUniformMat4(const char* name, const glm::mat4& value) {
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(value));
 }
 
-void Shader::setUniformTexture(const char* name, GLint texture_id) {
+void Shader::setUniformTexture(const char* name, GLint texture_slot) {
 	GLint loc = glGetUniformLocation(id, name);
-	glUniform1i(loc, texture_id);
+	glUniform1i(loc, texture_slot);
 }
 
 Shader::~Shader() {
