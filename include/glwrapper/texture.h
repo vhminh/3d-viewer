@@ -2,11 +2,8 @@
 #include "glwrapper/gl_object.h"
 #include "util/macro.h"
 
-#include <string>
-
 enum TextureType {
-	NORMALS = 0,
-	AMBIENT,
+	AMBIENT = 0,
 	DIFFUSE,
 	SPECULAR,
 
@@ -19,8 +16,8 @@ public:
 	MOVE(Texture);
 	static Texture create(const char* path, TextureType type, int wrap_s = GL_REPEAT, int wrap_t = GL_REPEAT,
 	                      int min_filter = GL_LINEAR, int mag_filter = GL_LINEAR);
-	static Texture create(unsigned char* data, int w, int h, TextureType type, int wrap_s = GL_REPEAT, int wrap_t = GL_REPEAT,
-	                      int min_filter = GL_LINEAR, int mag_filter = GL_LINEAR);
+	static Texture create(unsigned char* data, int w, int h, TextureType type, int wrap_s = GL_REPEAT,
+	                      int wrap_t = GL_REPEAT, int min_filter = GL_LINEAR, int mag_filter = GL_LINEAR);
 	virtual ~Texture();
 
 	TextureType get_type() const;

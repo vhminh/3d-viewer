@@ -51,12 +51,6 @@ void Mesh::render(Shader& shader, const Camera& camera) const {
 	for (const std::shared_ptr<Texture> texture : material.textures) {
 		// TODO: multi texture support
 		switch (texture->get_type()) {
-		case TextureType::NORMALS: {
-			glActiveTexture(GL_TEXTURE0 + tex_slot);
-			glBindTexture(GL_TEXTURE_2D, texture->get_id());
-			shader.setUniformTexture("normal_map", tex_slot);
-			break;
-		}
 		case TextureType::AMBIENT: {
 			glActiveTexture(GL_TEXTURE0 + tex_slot);
 			glBindTexture(GL_TEXTURE_2D, texture->get_id());

@@ -16,13 +16,13 @@ Texture Texture::create(const char* path, TextureType type, int wrap_s, int wrap
 		throw ImageLoadingException(path);
 	}
 
-	Texture texture = Texture::create(data, w, h, n_channels, type, wrap_s, wrap_t, min_filter, mag_filter);
+	Texture texture = Texture::create(data, w, h, type, wrap_s, wrap_t, min_filter, mag_filter);
 
 	stbi_image_free(data);
 	return texture;
 }
 
-Texture Texture::create(unsigned char* data, int w, int h, int n_channels, TextureType type, int wrap_s, int wrap_t,
+Texture Texture::create(unsigned char* data, int w, int h, TextureType type, int wrap_s, int wrap_t,
                         int min_filter, int mag_filter) {
 	// texture wrap
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);

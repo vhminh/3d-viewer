@@ -4,10 +4,11 @@
 #include "assimp/material.h"
 #include "assimp/matrix4x4.h"
 #include "assimp/types.h"
+#include "gl3.h"
 
-#include <OpenGL/gl.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#include <cstdlib>
 #include <iostream>
 #include <vector>
 
@@ -98,7 +99,7 @@ Mesh Model::create_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat
 
 Vertex create_vertex(const aiVector3D& position, const aiVector3D& normal,
                      const std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords) {
-	return Vertex(to_vec3(position), to_vec3(normal), tex_coords[0]); // TODO: multiple uv channels
+	return Vertex(to_vec3(position), glm::normalize(to_vec3(normal)), tex_coords[0]); // TODO: multiple uv channels
 }
 
 std::ostream& operator<<(std::ostream& os, const aiColor3D& color) {
@@ -107,9 +108,7 @@ std::ostream& operator<<(std::ostream& os, const aiColor3D& color) {
 }
 
 TextureType from_ai_texture_type(const aiTextureType ai_type) {
-	if (ai_type == aiTextureType_NORMALS) {
-		return TextureType::NORMALS;
-	} else if (ai_type == aiTextureType_AMBIENT) {
+	if (ai_type == aiTextureType_AMBIENT) {
 		return TextureType::AMBIENT;
 	} else if (ai_type == aiTextureType_DIFFUSE) {
 		return TextureType::DIFFUSE;
@@ -121,9 +120,7 @@ TextureType from_ai_texture_type(const aiTextureType ai_type) {
 }
 
 aiTextureType to_ai_texture_type(const TextureType type) {
-	if (type == TextureType::NORMALS) {
-		return aiTextureType_NORMALS;
-	} else if (type == TextureType::AMBIENT) {
+	if (type == TextureType::AMBIENT) {
 		return aiTextureType_AMBIENT;
 	} else if (type == TextureType::DIFFUSE) {
 		return aiTextureType_DIFFUSE;
