@@ -92,9 +92,24 @@ Shader& Shader::operator=(Shader&& another) {
 
 void Shader::use() const { glUseProgram(id); }
 
+void Shader::setUniformInt(const char* name, int value) {
+	GLint loc = glGetUniformLocation(id, name);
+	glUniform1i(loc, value);
+}
+
+void Shader::setUniformFloat(const char* name, float value) {
+	GLint loc = glGetUniformLocation(id, name);
+	glUniform1f(loc, value);
+}
+
 void Shader::setUniformVec3(const char* name, const glm::vec3& value) {
 	GLint loc = glGetUniformLocation(id, name);
 	glUniform3fv(loc, 1, glm::value_ptr(value));
+}
+
+void Shader::setUniformVec3(const char* name, const float* values) {
+	GLint loc = glGetUniformLocation(id, name);
+	glUniform3fv(loc, 1, values);
 }
 
 void Shader::setUniformMat4(const char* name, const glm::mat4& value) {

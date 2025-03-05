@@ -260,10 +260,61 @@ void Model::load_lights(const aiScene* scene) {
 			}
 		}
 	}
+	for (const DirectionalLight& light : directional_lights) {
+		std::cerr << "directional light " << light.color.diffuse.r << " " << light.color.diffuse.g << " " << light.color.diffuse.b << std::endl;
+	}
+	for (const PointLight& light : point_lights) {
+		std::cerr << "point light " << light.color.diffuse.r << " " << light.color.diffuse.g << " " << light.color.diffuse.b << std::endl;
+	}
+	assert(directional_lights.size() <= MAX_NUM_DIRECTIONAL_LIGHTS);
+	assert(point_lights.size() <= MAX_NUM_POINT_LIGHTS);
+}
+
+void set_light_uniforms(Shader& shader, const std::vector<DirectionalLight>& directional_lights,
+                        const std::vector<PointLight>& point_lights) {
+	shader.setUniformInt("num_directional_lights", directional_lights.size());
+	shader.setUniformInt("num_point_lights", point_lights.size());
+	char buf[64];
+	for (int i = 0; i < directional_lights.size(); ++i) {
+		const DirectionalLight& light = directional_lights[i];
+		snprintf(buf, 63, "directional_lights[%d].ambient", i);
+		shader.setUniformVec3(buf, light.color.ambient);
+		snprintf(buf, 63, "directional_lights[%d].diffuse", i);
+		shader.setUniformVec3(buf, light.color.diffuse);
+		snprintf(buf, 63, "directional_lights[%d].specular", i);
+		shader.setUniformVec3(buf, light.color.specular);
+		snprintf(buf, 63, "directional_lights[%d].attenuation.constant", i);
+		shader.setUniformFloat(buf, light.attenuation.constant);
+		snprintf(buf, 63, "directional_lights[%d].attenuation.linear", i);
+		shader.setUniformFloat(buf, light.attenuation.linear);
+		snprintf(buf, 63, "directional_lights[%d].attenuation.quadratic", i);
+		shader.setUniformFloat(buf, light.attenuation.quadratic);
+		snprintf(buf, 63, "directional_lights[%d].direction", i);
+		shader.setUniformVec3(buf, (float*)&light.direction);
+	}
+	for (int i = 0; i < point_lights.size(); ++i) {
+		const PointLight& light = point_lights[i];
+		snprintf(buf, 63, "point_lights[%d].ambient", i);
+		shader.setUniformVec3(buf, light.color.ambient);
+		snprintf(buf, 63, "point_lights[%d].diffuse", i);
+		shader.setUniformVec3(buf, light.color.diffuse);
+		snprintf(buf, 63, "point_lights[%d].specular", i);
+		shader.setUniformVec3(buf, light.color.specular);
+		snprintf(buf, 63, "point_lights[%d].attenuation.constant", i);
+		shader.setUniformFloat(buf, light.attenuation.constant);
+		snprintf(buf, 63, "point_lights[%d].attenuation.linear", i);
+		shader.setUniformFloat(buf, light.attenuation.linear);
+		snprintf(buf, 63, "point_lights[%d].attenuation.quadratic", i);
+		shader.setUniformFloat(buf, light.attenuation.quadratic);
+		snprintf(buf, 63, "point_lights[%d].position", i);
+		shader.setUniformVec3(buf, (float*)&light.position);
+	}
 }
 
 void Model::render(Shader& shader, const Camera& camera) const {
+	shader.use();
+	set_light_uniforms(shader, directional_lights, point_lights);
 	for (const Mesh& mesh : this->meshes) {
-		mesh.render(shader, camera);
+		mesh.render(shader, camera, directional_lights, point_lights);
 	}
 }

@@ -13,11 +13,11 @@
 #include <vector>
 
 #ifndef MAX_NUM_DIRECTIONAL_LIGHTS
-#define MAX_NUM_DIRECTIONAL_LIGHTS 16
+#define MAX_NUM_DIRECTIONAL_LIGHTS 8
 #endif
 
 #ifndef MAX_NUM_POINT_LIGHTS
-#define MAX_NUM_POINT_LIGHTS 16
+#define MAX_NUM_POINT_LIGHTS 24
 #endif
 
 class Model {

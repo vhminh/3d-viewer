@@ -1,5 +1,6 @@
 #pragma once
 
+#include "3dmodel/light.h"
 #include "3dmodel/material.h"
 #include "3dmodel/vertex.h"
 #include "app/camera.h"
@@ -17,7 +18,8 @@ public:
 	NO_COPY(Mesh);
 	MOVE(Mesh);
 
-	void render(Shader& shader, const Camera& camera) const;
+	void render(Shader& shader, const Camera& camera, const std::vector<DirectionalLight>& directional_lights,
+	            const std::vector<PointLight>& point_lights) const;
 
 private:
 	glm::mat4 transform; // transformation relative to world
