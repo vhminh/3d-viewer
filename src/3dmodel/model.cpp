@@ -243,7 +243,7 @@ void Model::load_lights(const aiScene* scene) {
 				glm::vec4 rel_dir_v4 = glm::vec4(rel_dir.x, rel_dir.y, rel_dir.z, 0.0);
 				glm::vec4 abs_dir_v4 = transform * rel_dir_v4;
 				glm::vec3 abs_dir = glm::vec3(abs_dir_v4.x, abs_dir_v4.y, abs_dir_v4.z);
-				directional_lights.emplace_back(color, attenuation, abs_dir);
+				directional_lights.emplace_back(color, abs_dir);
 				break;
 			}
 			case aiLightSource_POINT: {
@@ -283,12 +283,6 @@ void set_light_uniforms(Shader& shader, const std::vector<DirectionalLight>& dir
 		shader.setUniformVec3(buf, light.color.diffuse);
 		snprintf(buf, 63, "directional_lights[%d].specular", i);
 		shader.setUniformVec3(buf, light.color.specular);
-		snprintf(buf, 63, "directional_lights[%d].attenuation.constant", i);
-		shader.setUniformFloat(buf, light.attenuation.constant);
-		snprintf(buf, 63, "directional_lights[%d].attenuation.linear", i);
-		shader.setUniformFloat(buf, light.attenuation.linear);
-		snprintf(buf, 63, "directional_lights[%d].attenuation.quadratic", i);
-		shader.setUniformFloat(buf, light.attenuation.quadratic);
 		snprintf(buf, 63, "directional_lights[%d].direction", i);
 		shader.setUniformVec3(buf, (float*)&light.direction);
 	}

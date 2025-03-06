@@ -6,6 +6,16 @@ in vec2 f_tex_coord;
 
 uniform vec3 camera_position;
 
+// material
+struct Material {
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
+	float shininess;
+	float shininess_strength;
+};
+uniform Material material;
+
 // textures
 uniform sampler2D normal_map;
 uniform sampler2D diffuse_map_0;
@@ -21,7 +31,6 @@ struct DirectionalLight {
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
-	Attenuation attenuation;
 	vec3 direction;
 };
 
@@ -50,7 +59,7 @@ void main() {
 	for (int i = 0; i < num_directional_lights; ++i) {
 		DirectionalLight light = directional_lights[i];
 		float strength = max(0.0, dot(normalize(-light.direction), normalize(f_normal)));
-		diffuse += light.diffuse * strength;
+		diffuse += light.diffuse * strength * material.diffuse;
 	}
 	for (int i = 0; i < num_point_lights; ++i) {
 		PointLight light = point_lights[i];
@@ -58,7 +67,7 @@ void main() {
 		float attenuation = 1.0 / (light.attenuation.constant + light.attenuation.linear * distance + light.attenuation.quadratic * distance * distance);
 		vec3 light_dir = f_position - light.position;
 		float strength = max(0.0, dot(normalize(-light_dir), normalize(f_normal)));
-		diffuse += light.diffuse * strength * attenuation;
+		diffuse += light.diffuse * strength * material.diffuse * attenuation;
 	}
 
 	vec4 tex = texture(diffuse_map_0, f_tex_coord);

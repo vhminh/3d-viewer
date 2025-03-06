@@ -49,6 +49,14 @@ void set_transformation_matrices(Shader& shader, glm::mat4 local_transform, cons
 	shader.setUniformVec3("camera_position", camera.origin);
 }
 
+void bind_material(Shader& shader, const Material& material) {
+	shader.setUniformVec3("material.ambient", material.ambient);
+	shader.setUniformVec3("material.diffuse", material.diffuse);
+	shader.setUniformVec3("material.specular", material.specular);
+	shader.setUniformFloat("material.shininess", material.shininess);
+	shader.setUniformFloat("material.shininess_strength", material.shininess_strength);
+}
+
 void bind_textures(Shader& shader, const std::vector<std::shared_ptr<Texture>>& textures) {
 	int tex_slot = 0;
 	int ambient_count = 0;
@@ -89,6 +97,7 @@ void bind_textures(Shader& shader, const std::vector<std::shared_ptr<Texture>>& 
 void Mesh::render(Shader& shader, const Camera& camera, const std::vector<DirectionalLight>& directional_lights,
                   const std::vector<PointLight>& point_lights) const {
 	set_transformation_matrices(shader, transform, camera);
+	bind_material(shader, material);
 	bind_textures(shader, material.textures);
 
 	glBindVertexArray(va);

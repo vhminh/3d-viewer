@@ -20,10 +20,9 @@ struct Attenuation {
 
 struct DirectionalLight {
 	LightColor color;
-	Attenuation attenuation;
 	glm::vec3 direction;
 
-	DirectionalLight(LightColor color, Attenuation attenuation, glm::vec3 direction);
+	DirectionalLight(LightColor color, glm::vec3 direction);
 };
 
 struct PointLight {
