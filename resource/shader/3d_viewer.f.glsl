@@ -52,26 +52,35 @@ uniform int num_point_lights;
 
 out vec4 f_out;
 
-void main() {
-	vec3 ambient = vec3(0.0);
+vec4 tex = texture(diffuse_map_0, f_tex_coord);
 
-	vec3 diffuse = vec3(0.0);
+vec4 calculate_light(vec3 light_dir, vec3 diffuse_color, float attenuation) {
+	// diffuse
+	float diff = max(0.0, dot(normalize(-light_dir), normalize(f_normal)));
+	vec4 diffuse = vec4(diffuse_color * diff * material.diffuse, 1.0) * tex * attenuation;
+
+	// specular
+	// vec3 reflected_light = reflect(light_dir, f_normal);
+	// float spec = max(0.0, dot(normalize(reflected_light), normalize(camera_position - f_position)));
+	// spec = pow(spec, material.shininess) * material.shininess_strength;
+	// vec4 specular = vec4(diffuse_color * spec * material.diffuse, 1.0) * tex * attenuation; // TODO: use specular attributes
+	vec4 specular = vec4(0.0);
+
+	return diffuse + specular;
+}
+
+void main() {
+	f_out = vec4(0.0);
 	for (int i = 0; i < num_directional_lights; ++i) {
 		DirectionalLight light = directional_lights[i];
-		float strength = max(0.0, dot(normalize(-light.direction), normalize(f_normal)));
-		diffuse += light.diffuse * strength * material.diffuse;
+		f_out += calculate_light(light.direction, light.diffuse, 1.0);
 	}
 	for (int i = 0; i < num_point_lights; ++i) {
 		PointLight light = point_lights[i];
-		float distance = length(f_position - light.position);
+		vec3 light_ptr = f_position - light.position;
+		float distance = length(light_ptr);
 		float attenuation = 1.0 / (light.attenuation.constant + light.attenuation.linear * distance + light.attenuation.quadratic * distance * distance);
-		vec3 light_dir = f_position - light.position;
-		float strength = max(0.0, dot(normalize(-light_dir), normalize(f_normal)));
-		diffuse += light.diffuse * strength * material.diffuse * attenuation;
+		f_out += calculate_light(normalize(light_ptr), light.diffuse, attenuation);
 	}
-
-	vec4 tex = texture(diffuse_map_0, f_tex_coord);
-
-	f_out = tex * vec4(ambient + diffuse, 1.0);
 }
 
