@@ -44,7 +44,7 @@ uniform int num_point_lights;
 out vec4 f_out;
 
 void main() {
-	vec3 ambient = vec3(0.2);
+	vec3 ambient = vec3(0.0);
 
 	vec3 diffuse = vec3(0.0);
 	for (int i = 0; i < num_directional_lights; ++i) {
@@ -54,13 +54,15 @@ void main() {
 	}
 	for (int i = 0; i < num_point_lights; ++i) {
 		PointLight light = point_lights[i];
+		float distance = length(f_position - light.position);
+		float attenuation = 1.0 / (light.attenuation.constant + light.attenuation.linear * distance + light.attenuation.quadratic * distance * distance);
 		vec3 light_dir = f_position - light.position;
 		float strength = max(0.0, dot(normalize(-light_dir), normalize(f_normal)));
-		diffuse += light.diffuse * strength;
+		diffuse += light.diffuse * strength * attenuation;
 	}
 
 	vec4 tex = texture(diffuse_map_0, f_tex_coord);
 
-	f_out = tex * vec4(ambient + diffuse * 0.15 /*todo remove*/, 1.0);
+	f_out = tex * vec4(ambient + diffuse, 1.0);
 }
 
