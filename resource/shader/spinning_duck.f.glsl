@@ -20,12 +20,13 @@ void main() {
 	float ambient = 0.2;
 
 	// diffuse
-	vec3 light_dir = f_position - light_pos;
+	vec3 light_dir = normalize(f_position - light_pos);
 	float diffuse = light_strength_given_angle(-light_dir, f_normal) * 0.8;
 
 	// specular
-	vec3 reflected_light_dir = reflect(light_dir, f_normal);
-	float specular = pow(light_strength_given_angle(reflected_light_dir, camera_origin - f_position), 256) * 0.5;
+	vec3 view_dir = normalize(f_position - camera_origin);
+	vec3 halfway = normalize(-light_dir - view_dir);
+	float specular = pow(light_strength_given_angle(halfway, f_normal), 256) * 0.5;
 
 	// attenuation
 	float dist = length(light_pos - f_position);
