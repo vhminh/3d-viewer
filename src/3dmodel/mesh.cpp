@@ -1,6 +1,5 @@
 #include "3dmodel/mesh.h"
 
-#include "app/config.h"
 #include "gl.h"
 #include "gl3.h"
 #include "util/util.h"
@@ -30,6 +29,7 @@ Mesh::Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLui
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tex_coord));
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
 }
 
 Mesh::Mesh(Mesh&& another)
@@ -40,13 +40,8 @@ Mesh::Mesh(Mesh&& another)
 	another.eb = GLObject::ID_NONE;
 }
 
-void set_transformation_matrices(Shader& shader, glm::mat4 local_transform, const Camera& camera) {
+void set_mesh_local_transform(Shader& shader, glm::mat4 local_transform) {
 	shader.setUniformMat4("model_mat", local_transform);
-	shader.setUniformMat4("view_mat", camera.get_view_matrix());
-	const glm::mat4 projection_mat =
-		glm::perspective(glm::radians(45.0), DEFAULT_WINDOW_WIDTH * 1.0 / DEFAULT_WINDOW_HEIGHT, 0.1, 100.0);
-	shader.setUniformMat4("projection_mat", projection_mat);
-	shader.setUniformVec3("camera_position", camera.origin);
 }
 
 void bind_material(Shader& shader, const Material& material) {
@@ -96,7 +91,7 @@ void bind_textures(Shader& shader, const std::vector<std::shared_ptr<Texture>>& 
 
 void Mesh::render(Shader& shader, const Camera& camera, const std::vector<DirectionalLight>& directional_lights,
                   const std::vector<PointLight>& point_lights) const {
-	set_transformation_matrices(shader, transform, camera);
+	set_mesh_local_transform(shader, transform);
 	bind_material(shader, material);
 	bind_textures(shader, material.textures);
 

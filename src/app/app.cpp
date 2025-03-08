@@ -26,6 +26,7 @@ App::App(const char* title, int width, int height) {
 	glViewport(0, 0, fb_width, fb_height);
 
 	glfwSetFramebufferSizeCallback(window, on_framebuffer_resize);
+	glfwWindowHint(GLFW_SAMPLES, 4);
 
 	glEnable(GL_DEPTH_TEST);
 }

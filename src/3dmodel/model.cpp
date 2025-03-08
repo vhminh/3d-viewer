@@ -1,6 +1,7 @@
 #include "3dmodel/model.h"
 
 #include "3dmodel/mesh.h"
+#include "app/config.h"
 #include "assimp/light.h"
 #include "assimp/material.h"
 #include "assimp/matrix4x4.h"
@@ -10,6 +11,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <cstdlib>
+#include <glm/ext/matrix_clip_space.hpp>
 #include <iostream>
 #include <stack>
 #include <vector>
@@ -261,13 +263,23 @@ void Model::load_lights(const aiScene* scene) {
 		}
 	}
 	for (const DirectionalLight& light : directional_lights) {
-		std::cerr << "directional light " << light.color.diffuse.r << " " << light.color.diffuse.g << " " << light.color.diffuse.b << std::endl;
+		std::cerr << "directional light " << light.color.diffuse.r << " " << light.color.diffuse.g << " "
+				  << light.color.diffuse.b << std::endl;
 	}
 	for (const PointLight& light : point_lights) {
-		std::cerr << "point light " << light.color.diffuse.r << " " << light.color.diffuse.g << " " << light.color.diffuse.b << std::endl;
+		std::cerr << "point light " << light.color.diffuse.r << " " << light.color.diffuse.g << " "
+				  << light.color.diffuse.b << std::endl;
 	}
 	assert(directional_lights.size() <= MAX_NUM_DIRECTIONAL_LIGHTS);
 	assert(point_lights.size() <= MAX_NUM_POINT_LIGHTS);
+}
+
+void set_camera_view_transforms(Shader& shader, const Camera& camera) {
+	shader.setUniformMat4("view_mat", camera.get_view_matrix());
+	const glm::mat4 projection_mat =
+		glm::perspective(glm::radians(45.0), DEFAULT_WINDOW_WIDTH * 1.0 / DEFAULT_WINDOW_HEIGHT, 0.1, 100.0);
+	shader.setUniformMat4("projection_mat", projection_mat);
+	shader.setUniformVec3("camera_position", camera.origin);
 }
 
 void set_light_uniforms(Shader& shader, const std::vector<DirectionalLight>& directional_lights,
@@ -308,6 +320,7 @@ void set_light_uniforms(Shader& shader, const std::vector<DirectionalLight>& dir
 void Model::render(Shader& shader, const Camera& camera) const {
 	shader.use();
 	set_light_uniforms(shader, directional_lights, point_lights);
+	set_camera_view_transforms(shader, camera);
 	for (const Mesh& mesh : this->meshes) {
 		mesh.render(shader, camera, directional_lights, point_lights);
 	}
