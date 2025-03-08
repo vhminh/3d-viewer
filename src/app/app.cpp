@@ -29,6 +29,7 @@ App::App(const char* title, int width, int height) {
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
 App::~App() { glfwTerminate(); }

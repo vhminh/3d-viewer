@@ -30,11 +30,18 @@ Texture Texture::create(unsigned char* data, int w, int h, TextureType type, int
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter);
 
+	GLint internal_format;
+	if (type == TextureType::AMBIENT || type == TextureType::DIFFUSE || type == TextureType::SPECULAR) {
+		internal_format = GL_SRGB_ALPHA; // convert to linear space
+	} else {
+		internal_format = GL_RGBA;
+	}
+
 	// create texture
 	GLuint id;
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_2D, id);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	return Texture(id, type);
