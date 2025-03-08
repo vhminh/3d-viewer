@@ -32,3 +32,8 @@ endif (APPLE)
 
 target_link_libraries(3d-viewer ${LIBS})
 
+# misc
+add_executable(down_scale_textures ${CMAKE_SOURCE_DIR}/misc/down_scale_textures.cpp)
+set_property(TARGET down_scale_textures PROPERTY CXX_STANDARD 20)
+target_include_directories(down_scale_textures PUBLIC ${CMAKE_SOURCE_DIR}/include)
+
