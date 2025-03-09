@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <glm/glm.hpp>
 
 #ifndef MAX_NUM_UV_CHANNELS
@@ -9,7 +8,9 @@
 
 struct Vertex {
 	glm::vec3 position;
+	glm::vec3 tangent;
+	glm::vec3 bitangent;
 	glm::vec3 normal;
 	glm::vec2 tex_coord; // TODO: multiple uv channels
-	Vertex(glm::vec3 position, glm::vec3 normal, glm::vec2 tex_coord);
+	Vertex(glm::vec3 position, glm::vec3 tangent, glm::vec3 bitangent, glm::vec3 normal, glm::vec2 tex_coord);
 };

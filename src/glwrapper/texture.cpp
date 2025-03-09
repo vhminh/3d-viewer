@@ -22,8 +22,8 @@ Texture Texture::create(const char* path, TextureType type, int wrap_s, int wrap
 	return texture;
 }
 
-Texture Texture::create(unsigned char* data, int w, int h, TextureType type, int wrap_s, int wrap_t,
-                        int min_filter, int mag_filter) {
+Texture Texture::create(unsigned char* data, int w, int h, TextureType type, int wrap_s, int wrap_t, int min_filter,
+                        int mag_filter) {
 	// texture wrap
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
@@ -34,7 +34,7 @@ Texture Texture::create(unsigned char* data, int w, int h, TextureType type, int
 	if (type == TextureType::ALBEDO) {
 		internal_format = GL_SRGB_ALPHA; // convert to linear space
 	} else {
-		internal_format = GL_RGBA;
+		internal_format = GL_RGB;
 	}
 
 	// create texture

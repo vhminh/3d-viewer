@@ -8,6 +8,7 @@
 #include "assimp/types.h"
 #include "gl3.h"
 
+#include <array>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <cstdlib>
@@ -17,8 +18,8 @@
 #include <stack>
 #include <vector>
 
-Vertex create_vertex(const aiVector3D& position, const aiVector3D& normal,
-                     const std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords);
+Vertex create_vertex(const aiVector3D& position, const aiVector3D& tangent, const aiVector3D& bitangent,
+                     const aiVector3D& normal, const std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords);
 
 std::string directory_of(const char* path) {
 	std::string directory = std::string(path);
@@ -77,7 +78,8 @@ Mesh Model::load_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat4&
 				break; // TODO: multi uv channels
 			}
 		}
-		vertices.emplace_back(create_vertex(mesh->mVertices[i], mesh->mNormals[i], tex_coords));
+		vertices.emplace_back(
+			create_vertex(mesh->mVertices[i], mesh->mTangents[i], mesh->mBitangents[i], mesh->mNormals[i], tex_coords));
 	}
 
 	std::vector<GLuint> indices;
@@ -99,9 +101,10 @@ Mesh Model::load_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat4&
 	return Mesh(transform, std::move(vertices), std::move(indices), std::move(material));
 }
 
-Vertex create_vertex(const aiVector3D& position, const aiVector3D& normal,
-                     const std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords) {
-	return Vertex(from_ai_vec3(position), glm::normalize(from_ai_vec3(normal)),
+Vertex create_vertex(const aiVector3D& position, const aiVector3D& tangent, const aiVector3D& bitangent,
+                     const aiVector3D& normal, const std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords) {
+	return Vertex(from_ai_vec3(position), glm::normalize(from_ai_vec3(tangent)),
+	              glm::normalize(from_ai_vec3(bitangent)), glm::normalize(from_ai_vec3(normal)),
 	              tex_coords[0]); // TODO: multiple uv channels
 }
 

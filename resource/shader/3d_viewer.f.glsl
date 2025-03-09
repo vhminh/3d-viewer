@@ -1,8 +1,11 @@
 #version 330 core
 
-in vec3 f_position;
-in vec3 f_normal;
-in vec2 f_tex_coord;
+in VS_OUT {
+	vec3 position;
+	vec2 tex_coord;
+	vec3 normal;
+	mat3 tangent_mat;
+} f_in;
 
 uniform vec3 camera_position;
 
@@ -60,16 +63,25 @@ out vec4 f_out;
 
 vec4 get_albedo() {
 	if (use_albedo_map) {
-		return texture(albedo_map, f_tex_coord);
+		return texture(albedo_map, f_in.tex_coord);
 	} else {
 		return vec4(albedo_color, 1.0);
 	}
 }
 vec4 albedo = get_albedo();
 
+vec3 get_normal() {
+	if (use_normal_map) {
+		return normalize(f_in.tangent_mat * vec3(texture(normal_map, f_in.tex_coord) * 2.0 - 1.0));
+	} else {
+		return f_in.normal;
+	}
+}
+vec3 normal = get_normal();
+
 vec3 calculate_light(vec3 light_dir, vec3 diffuse_color, float attenuation) {
 	// diffuse
-	float diff = max(0.0, dot(normalize(-light_dir), normalize(f_normal)));
+	float diff = max(0.0, dot(normalize(-light_dir), normalize(normal)));
 	vec3 diffuse = diffuse_color * diff * albedo.rgb * attenuation;
 
 	vec3 specular = vec3(0.0);
@@ -86,7 +98,7 @@ void main() {
 	}
 	for (int i = 0; i < num_point_lights; ++i) {
 		PointLight light = point_lights[i];
-		vec3 light_ptr = f_position - light.position;
+		vec3 light_ptr = f_in.position - light.position;
 		float distance = length(light_ptr);
 		float attenuation = 1.0 / (light.attenuation.constant + light.attenuation.linear * distance + light.attenuation.quadratic * distance * distance);
 		color += calculate_light(normalize(light_ptr), light.diffuse, attenuation);
