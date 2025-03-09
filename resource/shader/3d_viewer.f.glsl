@@ -1,8 +1,9 @@
 #version 330 core
+#define MAX_NUM_UV_CHANNELS 2
 
 in VS_OUT {
 	vec3 position;
-	vec2 tex_coord;
+	vec2 tex_coords[MAX_NUM_UV_CHANNELS];
 	vec3 normal;
 	mat3 tangent_mat;
 } f_in;
@@ -13,21 +14,26 @@ uniform vec3 camera_position;
 uniform sampler2D albedo_map;
 uniform vec3 albedo_color;
 uniform bool use_albedo_map;
+uniform int albedo_uv_channel;
 
 uniform sampler2D normal_map;
 uniform bool use_normal_map;
+uniform int normal_uv_channel;
 
 uniform sampler2D metallic_map;
 uniform float metallic_factor;
 uniform bool use_metallic_map;
+uniform int metallic_uv_channel;
 
 uniform sampler2D roughness_map;
 uniform float roughness_factor;
 uniform bool use_roughness_map;
+uniform int roughness_uv_channel;
 
 uniform sampler2D ambient_occlusion_map;
 uniform float ambient_occlusion_factor;
 uniform bool use_ambient_occlusion_map;
+uniform int ao_uv_channel;
 
 // lights
 struct Attenuation {
@@ -59,7 +65,7 @@ out vec4 f_out;
 
 vec4 get_albedo() {
 	if (use_albedo_map) {
-		return texture(albedo_map, f_in.tex_coord);
+		return texture(albedo_map, f_in.tex_coords[albedo_uv_channel]);
 	} else {
 		return vec4(albedo_color, 1.0);
 	}
@@ -68,7 +74,7 @@ vec4 albedo = get_albedo();
 
 vec3 get_normal() {
 	if (use_normal_map) {
-		return normalize(f_in.tangent_mat * vec3(texture(normal_map, f_in.tex_coord) * 2.0 - 1.0));
+		return normalize(f_in.tangent_mat * vec3(texture(normal_map, f_in.tex_coords[normal_uv_channel]) * 2.0 - 1.0));
 	} else {
 		return f_in.normal;
 	}

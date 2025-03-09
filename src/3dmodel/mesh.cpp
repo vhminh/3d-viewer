@@ -29,7 +29,8 @@ Mesh::Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLui
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
 	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-	glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tex_coord));
+	glVertexAttribPointer(4, 2 * MAX_NUM_UV_CHANNELS, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+	                      (void*)offsetof(Vertex, tex_coords));
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
@@ -57,6 +58,7 @@ void bind_material(Shader& shader, const PBRMaterial& material) {
 		glBindTexture(GL_TEXTURE_2D, tex->get_id());
 		shader.setUniformTexture("albedo_map", slot);
 		shader.setUniformBool("use_albedo_map", true);
+		shader.setUniformInt("albedo_uv_channel", material.albedo_uv_channel);
 		++slot;
 	} else {
 		auto color = std::get<glm::vec3>(material.albedo);
@@ -69,6 +71,7 @@ void bind_material(Shader& shader, const PBRMaterial& material) {
 		glBindTexture(GL_TEXTURE_2D, tex->get_id());
 		shader.setUniformTexture("normal_map", slot);
 		shader.setUniformBool("use_normal_map", true);
+		shader.setUniformInt("normal_uv_channel", material.normals_uv_channel);
 		++slot;
 	} else {
 		shader.setUniformBool("use_normal_map", false);
@@ -79,6 +82,7 @@ void bind_material(Shader& shader, const PBRMaterial& material) {
 		glBindTexture(GL_TEXTURE_2D, tex->get_id());
 		shader.setUniformTexture("metallic_map", slot);
 		shader.setUniformBool("use_metallic_map", true);
+		shader.setUniformInt("metallic_uv_channel", material.metallic_uv_channel);
 		++slot;
 	} else {
 		float value = std::get<float>(material.metallic);
@@ -91,6 +95,7 @@ void bind_material(Shader& shader, const PBRMaterial& material) {
 		glBindTexture(GL_TEXTURE_2D, tex->get_id());
 		shader.setUniformTexture("roughness_map", slot);
 		shader.setUniformBool("use_roughness_map", true);
+		shader.setUniformInt("roughness_uv_channel", material.roughness_uv_channel);
 		++slot;
 	} else {
 		float value = std::get<float>(material.roughness);
@@ -103,6 +108,7 @@ void bind_material(Shader& shader, const PBRMaterial& material) {
 		glBindTexture(GL_TEXTURE_2D, tex->get_id());
 		shader.setUniformTexture("ambient_occlusion_map", slot);
 		shader.setUniformBool("use_ambient_occlusion_map", true);
+		shader.setUniformInt("ao_uv_channel", material.ao_uv_channel);
 		++slot;
 	} else {
 		float value = std::get<float>(material.ambient_occlusion);

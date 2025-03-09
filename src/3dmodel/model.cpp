@@ -75,12 +75,13 @@ Mesh Model::load_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat4&
 	std::vector<Vertex> vertices;
 	vertices.reserve(mesh->mNumVertices);
 	for (int i = 0; i < mesh->mNumVertices; ++i) {
-		std::array<glm::vec2, AI_MAX_NUMBER_OF_TEXTURECOORDS> tex_coords;
-		for (int j = 0; j < AI_MAX_NUMBER_OF_TEXTURECOORDS; ++j) {
+		std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords;
+		for (int j = 0; j < MAX_NUM_UV_CHANNELS; ++j) {
 			if (mesh->mTextureCoords[j]) {
-				aiVector3D coord = mesh->mTextureCoords[j][i]; // TODO: multi uv channels
+				aiVector3D coord = mesh->mTextureCoords[j][i];
 				tex_coords[j] = glm::vec2(coord.x, coord.y);
-				break; // TODO: multi uv channels
+			} else {
+				tex_coords[j] = glm::vec2(0.0, 0.0);
 			}
 		}
 		vertices.emplace_back(
@@ -109,8 +110,7 @@ Mesh Model::load_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat4&
 Vertex create_vertex(const aiVector3D& position, const aiVector3D& tangent, const aiVector3D& bitangent,
                      const aiVector3D& normal, const std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords) {
 	return Vertex(from_ai_vec3(position), glm::normalize(from_ai_vec3(tangent)),
-	              glm::normalize(from_ai_vec3(bitangent)), glm::normalize(from_ai_vec3(normal)),
-	              tex_coords[0]); // TODO: multiple uv channels
+	              glm::normalize(from_ai_vec3(bitangent)), glm::normalize(from_ai_vec3(normal)), tex_coords);
 }
 
 std::ostream& operator<<(std::ostream& os, const aiColor3D& color) {
@@ -124,8 +124,19 @@ PBRMaterial Model::load_material(const aiScene* scene, const aiMaterial* materia
 	PBRPropTex metallic = load_float_texture(scene, material, TextureType::METALLIC, AI_MATKEY_METALLIC_FACTOR);
 	PBRPropTex roughness = load_float_texture(scene, material, TextureType::ROUGHNESS, AI_MATKEY_ROUGHNESS_FACTOR);
 	PBRPropTex ambient_occlusion = load_float_texture(scene, material, TextureType::AMBIENT_OCCLUSION, 1.0);
+	unsigned albedo_uv_channel = 0;
+	material->Get(AI_MATKEY_UVWSRC(aiTextureType_BASE_COLOR, 0), albedo_uv_channel);
+	unsigned normals_uv_channel = 0;
+	material->Get(AI_MATKEY_UVWSRC(aiTextureType_NORMALS, 0), normals_uv_channel);
+	unsigned metallic_uv_channel = 0;
+	material->Get(AI_MATKEY_UVWSRC(aiTextureType_METALNESS, 0), metallic_uv_channel);
+	unsigned roughness_uv_channel = 0;
+	material->Get(AI_MATKEY_UVWSRC(aiTextureType_DIFFUSE_ROUGHNESS, 0), roughness_uv_channel);
+	unsigned ao_uv_channel = 0;
+	material->Get(AI_MATKEY_UVWSRC(aiTextureType_AMBIENT_OCCLUSION, 0), ao_uv_channel);
 
-	return PBRMaterial(albedo, normals, metallic, roughness, ambient_occlusion);
+	return PBRMaterial(albedo, normals, metallic, roughness, ambient_occlusion, albedo_uv_channel, normals_uv_channel,
+	                   metallic_uv_channel, roughness_uv_channel, ao_uv_channel);
 }
 
 std::tuple<std::vector<unsigned char>, int, int> texture_data(const aiTexture* tex) {
@@ -147,8 +158,8 @@ std::optional<const char*> get_texture_path(const aiScene* scene, const aiMateri
 	if (material->GetTextureCount(ai_type) == 0) {
 		return std::nullopt;
 	} else {
-		aiString rel_path; // path relative to main model file
-		material->GetTexture(ai_type, 0, &rel_path);
+		aiString rel_path;                           // path relative to main model file
+		material->GetTexture(ai_type, 0, &rel_path); // TODO: multi texture support
 		std::cerr << "path is " << rel_path.C_Str() << std::endl;
 		return std::make_optional(rel_path.C_Str());
 	}
