@@ -1,16 +1,17 @@
 #include "3dmodel/model.h"
 
 #include "3dmodel/mesh.h"
+#include "3dmodel/utils/ai_conversions.h"
 #include "app/config.h"
 #include "assimp/light.h"
 #include "assimp/material.h"
-#include "assimp/matrix4x4.h"
 #include "assimp/types.h"
 #include "gl3.h"
 
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <cstdlib>
+#include <cstring>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <iostream>
 #include <stack>
@@ -19,21 +20,6 @@
 Vertex create_vertex(const aiVector3D& position, const aiVector3D& normal,
                      const std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords);
 
-glm::vec3 to_vec3(const aiColor3D& color) { return glm::vec3(color.r, color.g, color.b); }
-
-glm::vec3 to_vec3(const aiVector3D& vec) { return glm::vec3(vec.x, vec.y, vec.z); }
-
-glm::mat4 to_mat4(const aiMatrix4x4& mat) {
-	// clang-format off
-	return glm::mat4(
-		mat.a1, mat.b1, mat.c1, mat.d1,
-		mat.a2, mat.b2, mat.c2, mat.d2,
-		mat.a3, mat.b3, mat.c3, mat.d3,
-		mat.a4, mat.b4, mat.c4, mat.d4
-	);
-	// clang-format on
-}
-
 std::string directory_of(const char* path) {
 	std::string directory = std::string(path);
 	directory.erase(directory.find_last_of('/'));
@@ -41,9 +27,8 @@ std::string directory_of(const char* path) {
 }
 
 Model::Model(const char* path) : directory(directory_of(path)) {
-	const aiScene* scene =
-		importer.ReadFile(path, aiProcess_CalcTangentSpace | aiProcess_FlipUVs | aiProcess_Triangulate |
-	                                aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
+	const aiScene* scene = importer.ReadFile(path, aiProcess_CalcTangentSpace | aiProcess_Triangulate |
+	                                                   aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
 
 	if (!scene) {
 		std::cerr << "cannot load scene: " << importer.GetErrorString() << std::endl;
@@ -53,11 +38,11 @@ Model::Model(const char* path) : directory(directory_of(path)) {
 
 	load_meshes(scene);
 
-	std::cout << "lights: " << scene->HasLights() << " " << scene->mNumLights << std::endl;
-	std::cout << "cameras: " << scene->HasCameras() << " " << scene->mNumCameras << std::endl;
-	std::cout << "materials: " << scene->HasMaterials() << " " << scene->mNumMaterials << std::endl;
-	std::cout << "meshes: " << scene->HasMeshes() << " " << scene->mNumMeshes << std::endl;
-	std::cout << "animations: " << scene->HasAnimations() << " " << scene->mNumAnimations << std::endl;
+	std::cout << "lights: " << scene->mNumLights << std::endl;
+	std::cout << "cameras: " << scene->mNumCameras << std::endl;
+	std::cout << "materials: " << scene->mNumMaterials << std::endl;
+	std::cout << "meshes: " << scene->mNumMeshes << std::endl;
+	std::cout << "animations: " << scene->mNumAnimations << std::endl;
 }
 
 void Model::load_meshes(const aiScene* scene) {
@@ -67,7 +52,7 @@ void Model::load_meshes(const aiScene* scene) {
 		auto [node, transform] = stack.top();
 		stack.pop();
 
-		glm::mat4 new_transform = transform * to_mat4(node->mTransformation);
+		glm::mat4 new_transform = transform * from_ai_mat4(node->mTransformation);
 
 		for (unsigned i = 0; i < node->mNumMeshes; ++i) {
 			unsigned mesh_idx = node->mMeshes[i];
@@ -110,13 +95,14 @@ Mesh Model::load_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat4&
 	}
 	indices.shrink_to_fit();
 
-	Material material = load_material(scene, scene->mMaterials[mesh->mMaterialIndex]);
+	PBRMaterial material = load_material(scene, scene->mMaterials[mesh->mMaterialIndex]);
 	return Mesh(transform, std::move(vertices), std::move(indices), std::move(material));
 }
 
 Vertex create_vertex(const aiVector3D& position, const aiVector3D& normal,
                      const std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords) {
-	return Vertex(to_vec3(position), glm::normalize(to_vec3(normal)), tex_coords[0]); // TODO: multiple uv channels
+	return Vertex(from_ai_vec3(position), glm::normalize(from_ai_vec3(normal)),
+	              tex_coords[0]); // TODO: multiple uv channels
 }
 
 std::ostream& operator<<(std::ostream& os, const aiColor3D& color) {
@@ -124,54 +110,14 @@ std::ostream& operator<<(std::ostream& os, const aiColor3D& color) {
 	return os;
 }
 
-TextureType from_ai_texture_type(const aiTextureType ai_type) {
-	if (ai_type == aiTextureType_AMBIENT) {
-		return TextureType::AMBIENT;
-	} else if (ai_type == aiTextureType_DIFFUSE) {
-		return TextureType::DIFFUSE;
-	} else if (ai_type == aiTextureType_SPECULAR) {
-		return TextureType::SPECULAR;
-	}
-	std::cerr << "unsupported assimp texture type " << ai_type << std::endl;
-	assert(false);
-}
+PBRMaterial Model::load_material(const aiScene* scene, const aiMaterial* material) {
+	PBRColorTex albedo = load_color_texture(scene, material, TextureType::ALBEDO, AI_MATKEY_BASE_COLOR);
+	PBROptTex normals = load_texure_opt(scene, material, TextureType::NORMALS);
+	PBRPropTex metallic = load_float_texture(scene, material, TextureType::METALLIC, AI_MATKEY_METALLIC_FACTOR);
+	PBRPropTex roughness = load_float_texture(scene, material, TextureType::ROUGHNESS, AI_MATKEY_ROUGHNESS_FACTOR);
+	PBRPropTex ambient_occlusion = load_float_texture(scene, material, TextureType::AMBIENT_OCCLUSION, 1.0);
 
-aiTextureType to_ai_texture_type(const TextureType type) {
-	if (type == TextureType::AMBIENT) {
-		return aiTextureType_AMBIENT;
-	} else if (type == TextureType::DIFFUSE) {
-		return aiTextureType_DIFFUSE;
-	} else if (type == TextureType::SPECULAR) {
-		return aiTextureType_SPECULAR;
-	}
-	std::cerr << "unsupported texture type " << type << std::endl;
-	assert(false);
-}
-
-Material Model::load_material(const aiScene* scene, const aiMaterial* material) {
-	aiColor3D ambient, diffuse, specular;
-	material->Get(AI_MATKEY_COLOR_AMBIENT, ambient);
-	material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
-	material->Get(AI_MATKEY_COLOR_SPECULAR, specular);
-	float shininess = 0, shininess_strength = 1.0;
-	material->Get(AI_MATKEY_SHININESS, shininess);
-	material->Get(AI_MATKEY_SHININESS_STRENGTH, shininess_strength);
-	std::cout << "ambient: " << ambient << ", diffuse: " << diffuse << ", specular: " << specular
-			  << ", shininess: " << shininess << ", shininess_strength: " << shininess_strength << std::endl;
-
-	std::vector<std::shared_ptr<Texture>> textures;
-	for (int i = 0; i < TextureType::COUNT; ++i) {
-		TextureType type = TextureType(i);
-		aiTextureType ai_type = to_ai_texture_type(type);
-		unsigned count = material->GetTextureCount(ai_type);
-		for (int j = 0; j < count; ++j) {
-			aiString rel_path; // path relative to main model file
-			material->GetTexture(ai_type, j, &rel_path);
-			textures.push_back(this->load_texture(scene, type, rel_path.C_Str()));
-		}
-	}
-
-	return Material(to_vec3(ambient), to_vec3(diffuse), to_vec3(specular), shininess, shininess_strength, textures);
+	return PBRMaterial(albedo, normals, metallic, roughness, ambient_occlusion);
 }
 
 std::tuple<std::vector<unsigned char>, int, int> texture_data(const aiTexture* tex) {
@@ -182,6 +128,73 @@ std::tuple<std::vector<unsigned char>, int, int> texture_data(const aiTexture* t
 		std::vector<unsigned char> data(tex->mWidth * tex->mHeight * 3);
 		std::cerr << "TODO: fill data for embedded texture" << std::endl;
 		return std::make_tuple(data, tex->mWidth, tex->mHeight);
+	}
+}
+
+std::optional<const char*> get_texture_path(const aiScene* scene, const aiMaterial* material,
+                                            TextureType texture_type) {
+	aiTextureType ai_type = to_ai_texture_type(texture_type);
+	std::cerr << "Material " << material->GetName().C_Str() << ", texture type: " << texture_type
+			  << ", count: " << material->GetTextureCount(ai_type) << std::endl;
+	if (material->GetTextureCount(ai_type) == 0) {
+		return std::nullopt;
+	} else {
+		aiString rel_path; // path relative to main model file
+		material->GetTexture(ai_type, 0, &rel_path);
+		std::cerr << "path is " << rel_path.C_Str() << std::endl;
+		return std::make_optional(rel_path.C_Str());
+	}
+}
+
+PBROptTex Model::load_texure_opt(const aiScene* scene, const aiMaterial* material, TextureType type) {
+	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
+	if (maybe_path) {
+		// has texture
+		return load_texture(scene, type, maybe_path.value());
+	} else {
+		return std::nullopt;
+	}
+}
+
+PBRColorTex Model::load_color_texture(const aiScene* scene, const aiMaterial* material, TextureType type,
+                                      const char* fallback_matkey, unsigned fallback_matkey_type,
+                                      unsigned fallback_matkey_idx) {
+	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
+	if (maybe_path) {
+		// has texture
+		return load_texture(scene, type, maybe_path.value());
+	} else {
+		// fallback color
+		aiColor3D color;
+		assert(aiReturn_SUCCESS == material->Get(fallback_matkey, fallback_matkey_type, fallback_matkey_idx, color));
+		return from_ai_color3(color);
+	}
+}
+
+PBRPropTex Model::load_float_texture(const aiScene* scene, const aiMaterial* material, TextureType type,
+                                     const char* fallback_matkey, unsigned fallback_matkey_type,
+                                     unsigned fallback_matkey_idx) {
+	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
+	if (maybe_path) {
+		// has texture
+		return load_texture(scene, type, maybe_path.value());
+	} else {
+		// fallback value
+		float value;
+		assert(aiReturn_SUCCESS == material->Get(fallback_matkey, fallback_matkey_type, fallback_matkey_idx, value));
+		return value;
+	}
+}
+
+PBRPropTex Model::load_float_texture(const aiScene* scene, const aiMaterial* material, TextureType type,
+                                     float fallback) {
+	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
+	if (maybe_path) {
+		// has texture
+		return load_texture(scene, type, maybe_path.value());
+	} else {
+		// fallback value
+		return fallback;
 	}
 }
 
@@ -209,9 +222,9 @@ std::shared_ptr<Texture> Model::load_texture(const aiScene* scene, TextureType t
 void transforms_by_node_name_helper(const aiNode* node, const glm::mat4& prev_transform,
                                     std::map<std::string_view, std::vector<glm::mat4>>& result) {
 	std::string_view node_name = std::string_view(node->mName.C_Str());
-	glm::mat4 transform = prev_transform * to_mat4(node->mTransformation);
+	glm::mat4 transform = prev_transform * from_ai_mat4(node->mTransformation);
 	if (node_name.size()) {
-		result[node_name].push_back(prev_transform * to_mat4(node->mTransformation));
+		result[node_name].push_back(prev_transform * from_ai_mat4(node->mTransformation));
 	}
 	for (int i = 0; i < node->mNumChildren; ++i) {
 		transforms_by_node_name_helper(node->mChildren[i], transform, result);
@@ -228,8 +241,8 @@ void Model::load_lights(const aiScene* scene) {
 	std::map<std::string_view, std::vector<glm::mat4>> transforms_by_name = transforms_by_node_name(scene);
 	for (int i = 0; i < scene->mNumLights; ++i) {
 		aiLight* ai_light = scene->mLights[i];
-		LightColor color = LightColor(to_vec3(ai_light->mColorAmbient), to_vec3(ai_light->mColorDiffuse),
-		                              to_vec3(ai_light->mColorSpecular));
+		LightColor color = LightColor(from_ai_color3(ai_light->mColorAmbient), from_ai_color3(ai_light->mColorDiffuse),
+		                              from_ai_color3(ai_light->mColorSpecular));
 		Attenuation attenuation =
 			Attenuation(ai_light->mAttenuationConstant, ai_light->mAttenuationLinear, ai_light->mAttenuationQuadratic);
 
@@ -241,7 +254,7 @@ void Model::load_lights(const aiScene* scene) {
 		for (const glm::mat4& transform : transforms) {
 			switch (ai_light->mType) {
 			case aiLightSource_DIRECTIONAL: {
-				glm::vec3 rel_dir = to_vec3(ai_light->mDirection);
+				glm::vec3 rel_dir = from_ai_vec3(ai_light->mDirection);
 				glm::vec4 rel_dir_v4 = glm::vec4(rel_dir.x, rel_dir.y, rel_dir.z, 0.0);
 				glm::vec4 abs_dir_v4 = transform * rel_dir_v4;
 				glm::vec3 abs_dir = glm::vec3(abs_dir_v4.x, abs_dir_v4.y, abs_dir_v4.z);
@@ -249,7 +262,7 @@ void Model::load_lights(const aiScene* scene) {
 				break;
 			}
 			case aiLightSource_POINT: {
-				glm::vec3 rel_pos = to_vec3(ai_light->mPosition);
+				glm::vec3 rel_pos = from_ai_vec3(ai_light->mPosition);
 				glm::vec4 rel_pos_v4 = glm::vec4(rel_pos.x, rel_pos.y, rel_pos.z, 1.0);
 				glm::vec4 abs_pos_v4 = transform * rel_pos_v4;
 				glm::vec3 abs_pos = glm::vec3(abs_pos_v4.x, abs_pos_v4.y, abs_pos_v4.z);

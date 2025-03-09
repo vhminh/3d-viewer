@@ -4,16 +4,20 @@
 
 #include <glm/glm.hpp>
 #include <memory>
-#include <vector>
+#include <optional>
+#include <variant>
 
-struct Material {
-	Material(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular, float shininess, float shininess_strength,
-	         std::vector<std::shared_ptr<Texture>> textures);
+typedef std::optional<std::shared_ptr<Texture>> PBROptTex;
+typedef std::variant<std::shared_ptr<Texture>, glm::vec3> PBRColorTex;
+typedef std::variant<std::shared_ptr<Texture>, float> PBRPropTex;
 
-	glm::vec3 ambient;
-	glm::vec3 diffuse;
-	glm::vec3 specular;
-	float shininess;
-	float shininess_strength;
-	std::vector<std::shared_ptr<Texture>> textures;
+struct PBRMaterial {
+	PBRMaterial(PBRColorTex albedo, PBROptTex normals, PBRPropTex metallic, PBRPropTex roughness,
+	            PBRPropTex ambient_occlusion);
+
+	PBRColorTex albedo;
+	PBROptTex normals;
+	PBRPropTex metallic;
+	PBRPropTex roughness;
+	PBRPropTex ambient_occlusion;
 };

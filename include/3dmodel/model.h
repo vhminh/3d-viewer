@@ -32,7 +32,7 @@ private:
 	const std::string directory;
 	Assimp::Importer importer;
 	std::vector<Mesh> meshes;
-	std::vector<Material> materials;
+	std::vector<PBRMaterial> materials;
 	std::vector<std::shared_ptr<Texture>> textures; // TODO: can hold `Texture`s in place
 	std::map<std::string, std::shared_ptr<Texture>> texture_by_path;
 	std::vector<DirectionalLight> directional_lights;
@@ -41,6 +41,15 @@ private:
 	void load_meshes(const aiScene* scene);
 	void load_lights(const aiScene* scene);
 	Mesh load_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat4& transform);
-	Material load_material(const aiScene* scene, const aiMaterial* material);
+	PBROptTex load_texure_opt(const aiScene* scene, const aiMaterial* material, TextureType type);
+	PBRMaterial load_material(const aiScene* scene, const aiMaterial* material);
+
+	PBRColorTex load_color_texture(const aiScene* scene, const aiMaterial* material, TextureType type,
+	                               const char* fallback_matkey, unsigned fallback_matkey_type,
+	                               unsigned fallback_matkey_idx);
+	PBRPropTex load_float_texture(const aiScene* scene, const aiMaterial* material, TextureType type,
+	                              const char* fallback_matkey, unsigned fallback_matkey_type,
+	                              unsigned fallback_matkey_idx);
+	PBRPropTex load_float_texture(const aiScene* scene, const aiMaterial* material, TextureType type, float fallback);
 	std::shared_ptr<Texture> load_texture(const aiScene* scene, TextureType type, const char* rel_path);
 };

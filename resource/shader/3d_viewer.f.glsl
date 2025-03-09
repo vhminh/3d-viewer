@@ -7,18 +7,24 @@ in vec2 f_tex_coord;
 uniform vec3 camera_position;
 
 // material
-struct Material {
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
-	float shininess;
-	float shininess_strength;
-};
-uniform Material material;
+uniform sampler2D albedo_map;
+uniform vec3 albedo_color;
+uniform bool use_albedo_map;
 
-// textures
 uniform sampler2D normal_map;
-uniform sampler2D diffuse_map_0;
+uniform bool use_normal_map;
+
+uniform sampler2D metallic_map;
+uniform float metallic_factor;
+uniform bool use_metallic_map;
+
+uniform sampler2D roughness_map;
+uniform float roughness_factor;
+uniform bool use_roughness_map;
+
+uniform sampler2D ambient_occlusion_map;
+uniform float ambient_occlusion_factor;
+uniform bool use_ambient_occlusion_map;
 
 // lights
 struct Attenuation {
@@ -52,18 +58,20 @@ uniform int num_point_lights;
 
 out vec4 f_out;
 
-vec4 tex = texture(diffuse_map_0, f_tex_coord);
+vec4 get_albedo() {
+	if (use_albedo_map) {
+		return texture(albedo_map, f_tex_coord);
+	} else {
+		return vec4(albedo_color, 1.0);
+	}
+}
+vec4 albedo = get_albedo();
 
 vec3 calculate_light(vec3 light_dir, vec3 diffuse_color, float attenuation) {
 	// diffuse
 	float diff = max(0.0, dot(normalize(-light_dir), normalize(f_normal)));
-	vec3 diffuse = diffuse_color * diff * material.diffuse * tex.rgb * attenuation;
+	vec3 diffuse = diffuse_color * diff * albedo.rgb * attenuation;
 
-	// specular
-	// vec3 reflected_light = reflect(light_dir, f_normal);
-	// float spec = max(0.0, dot(normalize(reflected_light), normalize(camera_position - f_position)));
-	// spec = pow(spec, material.shininess) * material.shininess_strength;
-	// vec3 specular = diffuse_color * spec * material.diffuse * tex.rgb * attenuation; // TODO: use specular attributes
 	vec3 specular = vec3(0.0);
 
 	return diffuse + specular;
@@ -83,6 +91,6 @@ void main() {
 		float attenuation = 1.0 / (light.attenuation.constant + light.attenuation.linear * distance + light.attenuation.quadratic * distance * distance);
 		color += calculate_light(normalize(light_ptr), light.diffuse, attenuation);
 	}
-	f_out = vec4(color, tex.a);
+	f_out = vec4(color, albedo.a);
 }
 

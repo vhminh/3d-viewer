@@ -8,7 +8,7 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <iostream>
 
-Mesh::Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices, Material&& material)
+Mesh::Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices, PBRMaterial&& material)
 	: transform(transform), vertices(std::move(vertices)), indices(std::move(indices)), material(std::move(material)) {
 
 	glGenVertexArrays(1, &va);
@@ -44,48 +44,65 @@ void set_mesh_local_transform(Shader& shader, glm::mat4 local_transform) {
 	shader.setUniformMat4("model_mat", local_transform);
 }
 
-void bind_material(Shader& shader, const Material& material) {
-	shader.setUniformVec3("material.ambient", material.ambient);
-	shader.setUniformVec3("material.diffuse", material.diffuse);
-	shader.setUniformVec3("material.specular", material.specular);
-	shader.setUniformFloat("material.shininess", material.shininess);
-	shader.setUniformFloat("material.shininess_strength", material.shininess_strength);
-}
-
-void bind_textures(Shader& shader, const std::vector<std::shared_ptr<Texture>>& textures) {
-	int tex_slot = 0;
-	int ambient_count = 0;
-	int diffuse_count = 0;
-	int specular_count = 0;
-	for (const std::shared_ptr<Texture> texture : textures) {
-		char uniform_name[32] = "";
-		switch (texture->get_type()) {
-		case TextureType::AMBIENT: {
-			int n = snprintf(uniform_name, 30, "ambient_map_%d", ambient_count++);
-			assert(n < 30);
-			break;
-		}
-		case TextureType::DIFFUSE: {
-			int n = snprintf(uniform_name, 30, "diffuse_map_%d", diffuse_count++);
-			assert(n < 30);
-			break;
-		}
-		case TextureType::SPECULAR: {
-			int n = snprintf(uniform_name, 30, "specular_map_%d", specular_count++);
-			assert(n < 30);
-			break;
-		}
-		default: {
-			std::cerr << "skip texture of type " << texture->get_type() << std::endl;
-			break;
-		}
-		}
-		if (strlen(uniform_name) > 0) {
-			glActiveTexture(GL_TEXTURE0 + tex_slot);
-			glBindTexture(GL_TEXTURE_2D, texture->get_id());
-			shader.setUniformTexture(uniform_name, tex_slot);
-			tex_slot++;
-		}
+void bind_material(Shader& shader, const PBRMaterial& material) {
+	unsigned slot = 0;
+	if (std::holds_alternative<std::shared_ptr<Texture>>(material.albedo)) {
+		auto tex = std::get<std::shared_ptr<Texture>>(material.albedo);
+		glActiveTexture(GL_TEXTURE0 + slot);
+		glBindTexture(GL_TEXTURE_2D, tex->get_id());
+		shader.setUniformTexture("albedo_map", slot);
+		shader.setUniformBool("use_albedo_map", true);
+		++slot;
+	} else {
+		auto color = std::get<glm::vec3>(material.albedo);
+		shader.setUniformVec3("albedo_color", color);
+		shader.setUniformBool("use_albedo_map", false);
+	}
+	if (material.normals.has_value()) {
+		auto tex = material.normals.value();
+		glActiveTexture(GL_TEXTURE0 + slot);
+		glBindTexture(GL_TEXTURE_2D, tex->get_id());
+		shader.setUniformTexture("normal_map", slot);
+		shader.setUniformBool("use_normal_map", true);
+		++slot;
+	} else {
+		shader.setUniformBool("use_normal_map", false);
+	}
+	if (std::holds_alternative<std::shared_ptr<Texture>>(material.metallic)) {
+		auto tex = std::get<std::shared_ptr<Texture>>(material.metallic);
+		glActiveTexture(GL_TEXTURE0 + slot);
+		glBindTexture(GL_TEXTURE_2D, tex->get_id());
+		shader.setUniformTexture("metallic_map", slot);
+		shader.setUniformBool("use_metallic_map", true);
+		++slot;
+	} else {
+		float value = std::get<float>(material.metallic);
+		shader.setUniformFloat("metallic_factor", value);
+		shader.setUniformBool("use_metallic_map", false);
+	}
+	if (std::holds_alternative<std::shared_ptr<Texture>>(material.roughness)) {
+		auto tex = std::get<std::shared_ptr<Texture>>(material.roughness);
+		glActiveTexture(GL_TEXTURE0 + slot);
+		glBindTexture(GL_TEXTURE_2D, tex->get_id());
+		shader.setUniformTexture("roughness_map", slot);
+		shader.setUniformBool("use_roughness_map", true);
+		++slot;
+	} else {
+		float value = std::get<float>(material.roughness);
+		shader.setUniformFloat("roughness_factor", value);
+		shader.setUniformBool("use_roughness_map", false);
+	}
+	if (std::holds_alternative<std::shared_ptr<Texture>>(material.ambient_occlusion)) {
+		auto tex = std::get<std::shared_ptr<Texture>>(material.ambient_occlusion);
+		glActiveTexture(GL_TEXTURE0 + slot);
+		glBindTexture(GL_TEXTURE_2D, tex->get_id());
+		shader.setUniformTexture("ambient_occlusion_map", slot);
+		shader.setUniformBool("use_ambient_occlusion_map", true);
+		++slot;
+	} else {
+		float value = std::get<float>(material.ambient_occlusion);
+		shader.setUniformFloat("ambient_occlusion_factor", value);
+		shader.setUniformBool("use_ambient_occlusion_map", false);
 	}
 }
 
@@ -93,7 +110,6 @@ void Mesh::render(Shader& shader, const Camera& camera, const std::vector<Direct
                   const std::vector<PointLight>& point_lights) const {
 	set_mesh_local_transform(shader, transform);
 	bind_material(shader, material);
-	bind_textures(shader, material.textures);
 
 	glBindVertexArray(va);
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);

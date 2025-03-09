@@ -10,7 +10,7 @@ Texture::Texture(GLuint id, TextureType type) : GLObject(id), type(type) {}
 Texture Texture::create(const char* path, TextureType type, int wrap_s, int wrap_t, int min_filter, int mag_filter) {
 	// load image
 	int w, h, n_channels;
-	stbi_set_flip_vertically_on_load(false);
+	stbi_set_flip_vertically_on_load(true);
 	unsigned char* data = stbi_load(path, &w, &h, &n_channels, STBI_rgb_alpha); // request rgba
 	if (!data) {
 		throw ImageLoadingException(path);
@@ -31,7 +31,7 @@ Texture Texture::create(unsigned char* data, int w, int h, TextureType type, int
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter);
 
 	GLint internal_format;
-	if (type == TextureType::AMBIENT || type == TextureType::DIFFUSE || type == TextureType::SPECULAR) {
+	if (type == TextureType::ALBEDO) {
 		internal_format = GL_SRGB_ALPHA; // convert to linear space
 	} else {
 		internal_format = GL_RGBA;

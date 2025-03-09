@@ -92,6 +92,11 @@ Shader& Shader::operator=(Shader&& another) {
 
 void Shader::use() const { glUseProgram(id); }
 
+void Shader::setUniformBool(const char* name, bool value) {
+	GLint loc = glGetUniformLocation(id, name);
+	glUniform1i(loc, value);
+}
+
 void Shader::setUniformInt(const char* name, int value) {
 	GLint loc = glGetUniformLocation(id, name);
 	glUniform1i(loc, value);

@@ -14,7 +14,7 @@
 
 class Mesh {
 public:
-	Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices, Material&& material);
+	Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices, PBRMaterial&& material);
 	NO_COPY(Mesh);
 	MOVE(Mesh);
 
@@ -25,6 +25,6 @@ private:
 	glm::mat4 transform; // transformation relative to world
 	std::vector<Vertex> vertices;
 	std::vector<GLuint> indices;
-	Material material;
+	PBRMaterial material;
 	GLuint vb, va, eb;
 };

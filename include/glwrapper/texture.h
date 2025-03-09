@@ -3,9 +3,11 @@
 #include "util/macro.h"
 
 enum TextureType {
-	AMBIENT = 0,
-	DIFFUSE,
-	SPECULAR,
+	ALBEDO = 0,
+	NORMALS,
+	METALLIC,
+	ROUGHNESS,
+	AMBIENT_OCCLUSION,
 
 	COUNT,
 };

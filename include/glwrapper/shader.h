@@ -12,6 +12,7 @@ public:
 	virtual ~Shader();
 
 	void use() const;
+	void setUniformBool(const char* name, bool value);
 	void setUniformInt(const char* name, int value);
 	void setUniformFloat(const char* name, float value);
 	void setUniformVec3(const char* name, const glm::vec3& value);
