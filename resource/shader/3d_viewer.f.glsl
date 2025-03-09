@@ -37,16 +37,12 @@ struct Attenuation {
 };
 
 struct DirectionalLight {
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
+	vec3 color;
 	vec3 direction;
 };
 
 struct PointLight {
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
+	vec3 color;
 	Attenuation attenuation;
 	vec3 position;
 };
@@ -79,10 +75,10 @@ vec3 get_normal() {
 }
 vec3 normal = get_normal();
 
-vec3 calculate_light(vec3 light_dir, vec3 diffuse_color, float attenuation) {
+vec3 calculate_light(vec3 light_dir, vec3 light_color, float attenuation) {
 	// diffuse
 	float diff = max(0.0, dot(normalize(-light_dir), normalize(normal)));
-	vec3 diffuse = diffuse_color * diff * albedo.rgb * attenuation;
+	vec3 diffuse = light_color * diff * albedo.rgb * attenuation;
 
 	vec3 specular = vec3(0.0);
 
@@ -94,14 +90,14 @@ void main() {
 	vec3 color = vec3(0.0);
 	for (int i = 0; i < num_directional_lights; ++i) {
 		DirectionalLight light = directional_lights[i];
-		color += calculate_light(light.direction, light.diffuse, 1.0);
+		color += calculate_light(light.direction, light.color, 1.0);
 	}
 	for (int i = 0; i < num_point_lights; ++i) {
 		PointLight light = point_lights[i];
 		vec3 light_ptr = f_in.position - light.position;
 		float distance = length(light_ptr);
 		float attenuation = 1.0 / (light.attenuation.constant + light.attenuation.linear * distance + light.attenuation.quadratic * distance * distance);
-		color += calculate_light(normalize(light_ptr), light.diffuse, attenuation);
+		color += calculate_light(normalize(light_ptr), light.color, attenuation);
 	}
 	f_out = vec4(color, albedo.a);
 }

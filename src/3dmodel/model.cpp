@@ -28,8 +28,9 @@ std::string directory_of(const char* path) {
 }
 
 Model::Model(const char* path) : directory(directory_of(path)) {
-	const aiScene* scene = importer.ReadFile(path, aiProcess_CalcTangentSpace | aiProcess_Triangulate |
-	                                                   aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
+	const aiScene* scene =
+		importer.ReadFile(path, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_FlipUVs |
+	                                aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
 
 	if (!scene) {
 		std::cerr << "cannot load scene: " << importer.GetErrorString() << std::endl;
@@ -38,6 +39,10 @@ Model::Model(const char* path) : directory(directory_of(path)) {
 	load_lights(scene);
 
 	load_meshes(scene);
+
+	// TODO: testing only remove this after
+	glm::vec3 light_color = glm::vec3(0.2, 0.2, 0.2);
+	point_lights.push_back(PointLight(light_color, Attenuation(1.0, 0.35, 0.44), glm::vec3(1.0, 1.0, 1.0)));
 
 	std::cout << "lights: " << scene->mNumLights << std::endl;
 	std::cout << "cameras: " << scene->mNumCameras << std::endl;
@@ -244,8 +249,7 @@ void Model::load_lights(const aiScene* scene) {
 	std::map<std::string_view, std::vector<glm::mat4>> transforms_by_name = transforms_by_node_name(scene);
 	for (int i = 0; i < scene->mNumLights; ++i) {
 		aiLight* ai_light = scene->mLights[i];
-		LightColor color = LightColor(from_ai_color3(ai_light->mColorAmbient), from_ai_color3(ai_light->mColorDiffuse),
-		                              from_ai_color3(ai_light->mColorSpecular));
+		glm::vec3 color = from_ai_color3(ai_light->mColorDiffuse);
 		Attenuation attenuation =
 			Attenuation(ai_light->mAttenuationConstant, ai_light->mAttenuationLinear, ai_light->mAttenuationQuadratic);
 
@@ -278,14 +282,6 @@ void Model::load_lights(const aiScene* scene) {
 			}
 		}
 	}
-	for (const DirectionalLight& light : directional_lights) {
-		std::cerr << "directional light " << light.color.diffuse.r << " " << light.color.diffuse.g << " "
-				  << light.color.diffuse.b << std::endl;
-	}
-	for (const PointLight& light : point_lights) {
-		std::cerr << "point light " << light.color.diffuse.r << " " << light.color.diffuse.g << " "
-				  << light.color.diffuse.b << std::endl;
-	}
 	assert(directional_lights.size() <= MAX_NUM_DIRECTIONAL_LIGHTS);
 	assert(point_lights.size() <= MAX_NUM_POINT_LIGHTS);
 }
@@ -305,23 +301,15 @@ void set_light_uniforms(Shader& shader, const std::vector<DirectionalLight>& dir
 	char buf[64];
 	for (int i = 0; i < directional_lights.size(); ++i) {
 		const DirectionalLight& light = directional_lights[i];
-		snprintf(buf, 63, "directional_lights[%d].ambient", i);
-		shader.setUniformVec3(buf, light.color.ambient);
-		snprintf(buf, 63, "directional_lights[%d].diffuse", i);
-		shader.setUniformVec3(buf, light.color.diffuse);
-		snprintf(buf, 63, "directional_lights[%d].specular", i);
-		shader.setUniformVec3(buf, light.color.specular);
+		snprintf(buf, 63, "directional_lights[%d].color", i);
+		shader.setUniformVec3(buf, light.color);
 		snprintf(buf, 63, "directional_lights[%d].direction", i);
 		shader.setUniformVec3(buf, (float*)&light.direction);
 	}
 	for (int i = 0; i < point_lights.size(); ++i) {
 		const PointLight& light = point_lights[i];
-		snprintf(buf, 63, "point_lights[%d].ambient", i);
-		shader.setUniformVec3(buf, light.color.ambient);
-		snprintf(buf, 63, "point_lights[%d].diffuse", i);
-		shader.setUniformVec3(buf, light.color.diffuse);
-		snprintf(buf, 63, "point_lights[%d].specular", i);
-		shader.setUniformVec3(buf, light.color.specular);
+		snprintf(buf, 63, "point_lights[%d].color", i);
+		shader.setUniformVec3(buf, light.color);
 		snprintf(buf, 63, "point_lights[%d].attenuation.constant", i);
 		shader.setUniformFloat(buf, light.attenuation.constant);
 		snprintf(buf, 63, "point_lights[%d].attenuation.linear", i);

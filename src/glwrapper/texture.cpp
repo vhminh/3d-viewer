@@ -10,7 +10,7 @@ Texture::Texture(GLuint id, TextureType type) : GLObject(id), type(type) {}
 Texture Texture::create(const char* path, TextureType type, int wrap_s, int wrap_t, int min_filter, int mag_filter) {
 	// load image
 	int w, h, n_channels;
-	stbi_set_flip_vertically_on_load(true);
+	stbi_set_flip_vertically_on_load(false);
 	unsigned char* data = stbi_load(path, &w, &h, &n_channels, STBI_rgb_alpha); // request rgba
 	if (!data) {
 		throw ImageLoadingException(path);

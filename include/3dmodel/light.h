@@ -2,14 +2,6 @@
 
 #include <glm/glm.hpp>
 
-struct LightColor {
-	glm::vec3 ambient;
-	glm::vec3 diffuse;
-	glm::vec3 specular;
-
-	LightColor(glm::vec3 ambient, glm::vec3 diffuse, glm::vec3 specular);
-};
-
 struct Attenuation {
 	float constant;
 	float linear;
@@ -19,16 +11,16 @@ struct Attenuation {
 };
 
 struct DirectionalLight {
-	LightColor color;
+	glm::vec3 color;
 	glm::vec3 direction;
 
-	DirectionalLight(LightColor color, glm::vec3 direction);
+	DirectionalLight(glm::vec3 color, glm::vec3 direction);
 };
 
 struct PointLight {
-	LightColor color;
+	glm::vec3 color;
 	Attenuation attenuation;
 	glm::vec3 position;
 
-	PointLight(LightColor color, Attenuation attenuation, glm::vec3 position);
+	PointLight(glm::vec3 color, Attenuation attenuation, glm::vec3 position);
 };
