@@ -1,5 +1,6 @@
 #version 330 core
 #define MAX_NUM_UV_CHANNELS 2
+#define PI 3.141592653589793
 
 in VS_OUT {
 	vec3 position;
@@ -63,14 +64,14 @@ uniform int num_point_lights;
 
 out vec4 f_out;
 
-vec4 get_albedo() {
+vec3 get_albedo() {
 	if (use_albedo_map) {
-		return texture(albedo_map, f_in.tex_coords[albedo_uv_channel]);
+		return texture(albedo_map, f_in.tex_coords[albedo_uv_channel]).rgb;
 	} else {
-		return vec4(albedo_color, 1.0);
+		return albedo_color;
 	}
 }
-vec4 albedo = get_albedo();
+vec3 albedo = get_albedo();
 
 vec3 get_normal() {
 	if (use_normal_map) {
@@ -81,14 +82,66 @@ vec3 get_normal() {
 }
 vec3 normal = get_normal();
 
+float get_metallic()  {
+	if (use_metallic_map) {
+		return texture(metallic_map, f_in.tex_coords[metallic_uv_channel]).r;
+	} else {
+		return metallic_factor;
+	}
+}
+float metallic = get_metallic();
+
+float get_roughness() {
+	if (use_roughness_map) {
+		return texture(roughness_map, f_in.tex_coords[roughness_uv_channel]).r;
+	} else {
+		return roughness_factor;
+	}
+}
+float roughness = get_roughness();
+
+// Trowbridge-Reitz GGX
+float D(float roughness, vec3 normal, vec3 halfway) {
+	float a = roughness * roughness;
+	float n_dot_h = max(0.0, dot(normal, halfway));
+	float denom = (n_dot_h * n_dot_h) * (a * a - 1) + 1;
+	denom = PI * denom * denom;
+	return a * a / denom;
+}
+
+// Schlick-GGX
+float G_sub(float roughness, vec3 normal, vec3 view_or_light) {
+	float k = (roughness + 1.0) * (roughness + 1.0) / 8.0;
+	float n_dot_v = max(0.0, dot(normal, -view_or_light));
+	return n_dot_v / (n_dot_v * (1.0 - k) + k);
+}
+
+// Smith
+float G(float roughness, vec3 normal, vec3 view, vec3 light) {
+	return G_sub(roughness, normal, view) * G_sub(roughness, normal, light);
+}
+
+// Fresnel-Schlick
+vec3 F(vec3 albedo, float metallic, vec3 halfway, vec3 view) {
+	vec3 F0 = vec3(0.04);
+	F0 = mix(F0, albedo, metallic);
+	// vec3 F0 = albedo * metallic;
+	float h_dot_v = max(0.0, dot(halfway, -view));
+	return F0 + (1.0 - F0) * pow(1.0 - h_dot_v, 5.0);
+}
+
 vec3 calculate_light(vec3 light_dir, vec3 light_color, float attenuation) {
-	// diffuse
-	float diff = max(0.0, dot(normalize(-light_dir), normalize(normal)));
-	vec3 diffuse = light_color * diff * albedo.rgb * attenuation;
+	vec3 view = normalize(f_in.position - camera_position);
+	vec3 halfway = normalize(-light_dir - view);
 
-	vec3 specular = vec3(0.0);
-
-	return diffuse + specular;
+	vec3 lambert = albedo / PI;
+	vec3 F = F(albedo, metallic, halfway, view);
+	vec3 kS = F;
+	vec3 kD = vec3(1.0) - kS;
+	kD *= 1.0 - metallic;
+	vec3 DFG = D(roughness, normal, halfway) * F * G(roughness, normal, view, light_dir);
+	vec3 cook_torrance = DFG / (4 * max(0.001, dot(-light_dir, normal)) * max(0.001, dot(-view, normal)));
+	return ((vec3(1.0) - F) * lambert + cook_torrance) * light_color * attenuation * max(0.0, dot(normal, -light_dir));
 }
 
 void main() {
@@ -96,15 +149,15 @@ void main() {
 	vec3 color = vec3(0.0);
 	for (int i = 0; i < num_directional_lights; ++i) {
 		DirectionalLight light = directional_lights[i];
-		color += calculate_light(light.direction, light.color, 1.0);
+		color += calculate_light(normalize(light.direction), light.color, 1.0);
 	}
 	for (int i = 0; i < num_point_lights; ++i) {
 		PointLight light = point_lights[i];
 		vec3 light_ptr = f_in.position - light.position;
 		float distance = length(light_ptr);
-		float attenuation = 1.0 / (light.attenuation.constant + light.attenuation.linear * distance + light.attenuation.quadratic * distance * distance);
+		float attenuation = 1.0 / (distance * distance);
 		color += calculate_light(normalize(light_ptr), light.color, attenuation);
 	}
-	f_out = vec4(color, albedo.a);
+	f_out = vec4(color, 1.0);
 }
 
