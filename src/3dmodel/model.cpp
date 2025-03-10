@@ -40,10 +40,6 @@ Model::Model(const char* path) : directory(directory_of(path)) {
 
 	load_meshes(scene);
 
-	// TODO: testing only remove this after
-	glm::vec3 light_color = glm::vec3(0.2, 0.2, 0.2);
-	point_lights.push_back(PointLight(light_color, Attenuation(1.0, 0.35, 0.44), glm::vec3(1.0, 1.0, 1.0)));
-
 	std::cout << "lights: " << scene->mNumLights << std::endl;
 	std::cout << "cameras: " << scene->mNumCameras << std::endl;
 	std::cout << "materials: " << scene->mNumMaterials << std::endl;
@@ -334,6 +330,14 @@ void set_light_uniforms(Shader& shader, const std::vector<DirectionalLight>& dir
 
 void Model::render(Shader& shader, const Camera& camera) const {
 	shader.use();
+
+	// TODO: make this a feature, not a hack lol
+	glm::vec3 light_color = glm::vec3(0.2, 0.2, 0.2);
+	PointLight player_light = PointLight(light_color, Attenuation(1.0, 0.14, 0.07),
+	                                     glm::vec3(camera.origin.x, camera.origin.y + 1.0, camera.origin.z));
+	std::vector<PointLight> point_lights = this->point_lights;
+	point_lights.push_back(player_light);
+
 	set_light_uniforms(shader, directional_lights, point_lights);
 	set_camera_view_transforms(shader, camera);
 	for (const Mesh& mesh : this->meshes) {
