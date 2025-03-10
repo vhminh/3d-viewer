@@ -11,7 +11,7 @@ Texture Texture::create(const char* path, TextureType type, int wrap_s, int wrap
 	// load image
 	int w, h, n_channels;
 	stbi_set_flip_vertically_on_load(false);
-	unsigned char* data = stbi_load(path, &w, &h, &n_channels, STBI_rgb_alpha); // request rgba
+	unsigned char* data = stbi_load(path, &w, &h, &n_channels, STBI_rgb); // request rgb
 	if (!data) {
 		throw ImageLoadingException(path);
 	}
@@ -32,7 +32,7 @@ Texture Texture::create(unsigned char* data, int w, int h, TextureType type, int
 
 	GLint internal_format;
 	if (type == TextureType::ALBEDO) {
-		internal_format = GL_SRGB_ALPHA; // convert to linear space
+		internal_format = GL_SRGB; // convert to linear space
 	} else {
 		internal_format = GL_RGB;
 	}
@@ -41,7 +41,7 @@ Texture Texture::create(unsigned char* data, int w, int h, TextureType type, int
 	GLuint id;
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_2D, id);
-	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	return Texture(id, type);
