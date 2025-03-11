@@ -2,6 +2,8 @@
 
 #include "app/config.h"
 
+#include <iostream>
+
 X3DViewer::X3DViewer(const char* title, int width, int height, const char* model_path)
 	: App(title, width, height),
 	  shader(Shader::create("resource/shader/3d_viewer.v.glsl", "resource/shader/3d_viewer.f.glsl")),
@@ -66,6 +68,14 @@ void X3DViewer::process_input(float dt) {
 	}
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
+	}
+	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+		try {
+			shader = Shader::create("resource/shader/3d_viewer.v.glsl", "resource/shader/3d_viewer.f.glsl");
+			std::cerr << "reload shader sucess" << std::endl;
+		} catch (const std::exception& ex) {
+			std::cerr << "error reloading shader " << ex.what() << std::endl;
+		}
 	}
 	process_camera_keyboard_input(dt);
 	process_camera_mouse_input(dt);

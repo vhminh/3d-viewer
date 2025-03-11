@@ -29,5 +29,5 @@ void main() {
 	vec3 normal_world = normalize(vec3(model_mat * vec4(normal, 0.0)));
 
 	v_out.normal = normal_world;
-	v_out.tangent_mat = mat3(tangent_world, bitangent_world, normal_world);
+	v_out.tangent_mat = transpose(mat3(tangent_world, bitangent_world, normal_world));
 }

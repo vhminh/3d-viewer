@@ -74,9 +74,9 @@ vec3 get_albedo() {
 
 vec3 get_normal() {
 	if (use_normal_map) {
-		vec3 normal = f_in.tangent_mat * texture(normal_map, f_in.tex_coords[normal_uv_channel]).rgb;
+		vec3 normal = texture(normal_map, f_in.tex_coords[normal_uv_channel]).rgb;
 		normal = normal * 2.0 - 1.0;
-		return normalize(normal);
+		return normalize(f_in.tangent_mat * normal);
 	} else {
 		return normalize(f_in.normal);
 	}
