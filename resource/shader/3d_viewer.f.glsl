@@ -71,7 +71,6 @@ vec3 get_albedo() {
 		return albedo_color;
 	}
 }
-vec3 albedo = get_albedo();
 
 vec3 get_normal() {
 	if (use_normal_map) {
@@ -82,7 +81,6 @@ vec3 get_normal() {
 		return normalize(f_in.normal);
 	}
 }
-vec3 normal = get_normal();
 
 float get_metallic()  {
 	if (use_metallic_map) {
@@ -91,7 +89,6 @@ float get_metallic()  {
 		return metallic_factor;
 	}
 }
-float metallic = get_metallic();
 
 float get_roughness() {
 	if (use_roughness_map) {
@@ -100,7 +97,6 @@ float get_roughness() {
 		return roughness_factor;
 	}
 }
-float roughness = get_roughness();
 
 // Trowbridge-Reitz GGX
 float D(float roughness, vec3 normal, vec3 halfway) {
@@ -132,7 +128,7 @@ vec3 F(vec3 albedo, float metallic, vec3 halfway, vec3 view) {
 	return F0 + (1.0 - F0) * pow(1.0 - h_dot_v, 5.0);
 }
 
-vec3 calculate_light(vec3 light_dir, vec3 light_color, float attenuation) {
+vec3 calculate_light(vec3 albedo, vec3 normal, float metallic, float roughness, vec3 light_dir, vec3 light_color, float attenuation) {
 	vec3 view = normalize(f_in.position - camera_position);
 	vec3 halfway = normalize(-light_dir - view);
 
@@ -149,16 +145,20 @@ vec3 calculate_light(vec3 light_dir, vec3 light_color, float attenuation) {
 void main() {
 	f_out = vec4(0.0);
 	vec3 color = vec3(0.0);
+	vec3 albedo = get_albedo();
+	vec3 normal = get_normal();
+	float metallic = get_metallic();
+	float roughness = get_roughness();
 	for (int i = 0; i < num_directional_lights; ++i) {
 		DirectionalLight light = directional_lights[i];
-		color += calculate_light(normalize(light.direction), light.color, 1.0);
+		color += calculate_light(albedo, normal, metallic, roughness, normalize(light.direction), light.color, 1.0);
 	}
 	for (int i = 0; i < num_point_lights; ++i) {
 		PointLight light = point_lights[i];
 		vec3 light_ptr = f_in.position - light.position;
 		float distance = length(light_ptr);
 		float attenuation = 1.0 / (distance * distance);
-		color += calculate_light(normalize(light_ptr), light.color, attenuation);
+		color += calculate_light(albedo, normal, metallic, roughness, normalize(light_ptr), light.color, attenuation);
 	}
 	f_out = vec4(color, 1.0);
 }

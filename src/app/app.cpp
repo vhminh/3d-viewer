@@ -1,5 +1,6 @@
 #include "app/app.h"
 
+#include "gl.h"
 #include "util/error.h"
 
 void on_framebuffer_resize(GLFWwindow* window, int new_width, int new_height) {
