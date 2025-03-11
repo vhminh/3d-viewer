@@ -84,7 +84,7 @@ vec3 get_normal() {
 
 float get_metallic()  {
 	if (use_metallic_map) {
-		return texture(metallic_map, f_in.tex_coords[metallic_uv_channel]).r;
+		return texture(metallic_map, f_in.tex_coords[metallic_uv_channel]).b;
 	} else {
 		return metallic_factor;
 	}
@@ -92,7 +92,7 @@ float get_metallic()  {
 
 float get_roughness() {
 	if (use_roughness_map) {
-		return texture(roughness_map, f_in.tex_coords[roughness_uv_channel]).r;
+		return texture(roughness_map, f_in.tex_coords[roughness_uv_channel]).g;
 	} else {
 		return roughness_factor;
 	}
