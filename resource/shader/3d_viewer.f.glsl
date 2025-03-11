@@ -64,11 +64,11 @@ uniform int num_point_lights;
 
 out vec4 f_out;
 
-vec3 get_albedo() {
+vec4 get_albedo() {
 	if (use_albedo_map) {
-		return texture(albedo_map, f_in.tex_coords[albedo_uv_channel]).rgb;
+		return texture(albedo_map, f_in.tex_coords[albedo_uv_channel]);
 	} else {
-		return albedo_color;
+		return vec4(albedo_color, 1.0);
 	}
 }
 
@@ -145,21 +145,24 @@ vec3 calculate_light(vec3 albedo, vec3 normal, float metallic, float roughness, 
 void main() {
 	f_out = vec4(0.0);
 	vec3 color = vec3(0.0);
-	vec3 albedo = get_albedo();
+	vec4 albedo = get_albedo();
+	if (albedo.a < 0.1) {
+		discard;
+	}
 	vec3 normal = get_normal();
 	float metallic = get_metallic();
 	float roughness = get_roughness();
 	for (int i = 0; i < num_directional_lights; ++i) {
 		DirectionalLight light = directional_lights[i];
-		color += calculate_light(albedo, normal, metallic, roughness, normalize(light.direction), light.color, 1.0);
+		color += calculate_light(vec3(albedo), normal, metallic, roughness, normalize(light.direction), light.color, 1.0);
 	}
 	for (int i = 0; i < num_point_lights; ++i) {
 		PointLight light = point_lights[i];
 		vec3 light_ptr = f_in.position - light.position;
 		float distance = length(light_ptr);
 		float attenuation = 1.0 / (distance * distance);
-		color += calculate_light(albedo, normal, metallic, roughness, normalize(light_ptr), light.color, attenuation);
+		color += calculate_light(vec3(albedo), normal, metallic, roughness, normalize(light_ptr), light.color, attenuation);
 	}
-	f_out = vec4(color, 1.0);
+	f_out = vec4(color, albedo.a);
 }
 
