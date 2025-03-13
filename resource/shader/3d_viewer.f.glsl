@@ -160,7 +160,7 @@ void main() {
 		PointLight light = point_lights[i];
 		vec3 light_ptr = f_in.position - light.position;
 		float distance = length(light_ptr);
-		float attenuation = 1.0 / (distance * distance);
+		float attenuation = 1.0 / (light.attenuation.constant + light.attenuation.linear * distance + light.attenuation.quadratic * distance * distance);
 		color += calculate_light(vec3(albedo), normal, metallic, roughness, normalize(light_ptr), light.color, attenuation);
 	}
 	f_out = vec4(color, albedo.a);
