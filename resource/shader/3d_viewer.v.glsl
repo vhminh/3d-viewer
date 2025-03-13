@@ -19,7 +19,7 @@ out VS_OUT {
 } v_out;
 
 void main() {
-	gl_Position = projection_mat * view_mat * model_mat * vec4(pos.xyz, 1.0);
+	gl_Position = projection_mat * view_mat * model_mat * vec4(pos, 1.0);
 
 	v_out.position = vec3(model_mat * vec4(pos, 1.0));
 	v_out.tex_coords = tex_coords;
@@ -29,5 +29,5 @@ void main() {
 	vec3 normal_world = normalize(vec3(model_mat * vec4(normal, 0.0)));
 
 	v_out.normal = normal_world;
-	v_out.tangent_mat = transpose(mat3(tangent_world, bitangent_world, normal_world));
+	v_out.tangent_mat = mat3(tangent_world, bitangent_world, normal_world);
 }
