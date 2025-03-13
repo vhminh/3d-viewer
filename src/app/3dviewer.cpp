@@ -2,6 +2,7 @@
 
 #include "app/config.h"
 
+#include <GLFW/glfw3.h>
 #include <iostream>
 
 X3DViewer::X3DViewer(const char* title, int width, int height, const char* model_path)
@@ -63,6 +64,9 @@ void X3DViewer::process_camera_mouse_input(float dt) {
 }
 
 void X3DViewer::process_input(float dt) {
+	if (GLFW_TRUE != glfwGetWindowAttrib(window, GLFW_FOCUSED)) {
+		return;
+	}
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}

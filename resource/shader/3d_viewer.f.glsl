@@ -98,6 +98,14 @@ float get_roughness() {
 	}
 }
 
+float get_ambient_occlusion() {
+	if (use_ambient_occlusion_map) {
+		return texture(ambient_occlusion_map, f_in.tex_coords[ao_uv_channel]).r;
+	} else {
+		return ambient_occlusion_factor;
+	}
+}
+
 // Trowbridge-Reitz GGX
 float D(float roughness, vec3 normal, vec3 halfway) {
 	float a = roughness * roughness;
@@ -139,7 +147,7 @@ vec3 calculate_light(vec3 albedo, vec3 normal, float metallic, float roughness, 
 	kD *= 1.0 - metallic;
 	vec3 DFG = D(roughness, normal, halfway) * F * G(roughness, normal, view, light_dir);
 	vec3 cook_torrance = DFG / (4 * max(0.001, dot(-light_dir, normal)) * max(0.001, dot(-view, normal)));
-	return ((vec3(1.0) - F) * lambert + cook_torrance) * light_color * attenuation * max(0.0, dot(normal, -light_dir));
+	return (kD * lambert + cook_torrance) * light_color * attenuation * max(0.0, dot(normal, -light_dir));
 }
 
 void main() {
@@ -152,6 +160,7 @@ void main() {
 	vec3 normal = get_normal();
 	float metallic = get_metallic();
 	float roughness = get_roughness();
+	float ao = get_ambient_occlusion();
 	for (int i = 0; i < num_directional_lights; ++i) {
 		DirectionalLight light = directional_lights[i];
 		color += calculate_light(vec3(albedo), normal, metallic, roughness, normalize(light.direction), light.color, 1.0);
@@ -163,6 +172,7 @@ void main() {
 		float attenuation = 1.0 / (light.attenuation.constant + light.attenuation.linear * distance + light.attenuation.quadratic * distance * distance);
 		color += calculate_light(vec3(albedo), normal, metallic, roughness, normalize(light_ptr), light.color, attenuation);
 	}
-	f_out = vec4(color, albedo.a);
+	vec3 ambient = vec3(0.03) * vec3(albedo) * ao;
+	f_out = vec4(color + ambient, albedo.a);
 }
 
