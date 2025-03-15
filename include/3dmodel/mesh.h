@@ -6,7 +6,7 @@
 #include "app/camera.h"
 #include "gl.h"
 #include "glwrapper/shader.h"
-#include "util/macro.h"
+#include "utils/macro.h"
 
 #include <assimp/mesh.h>
 #include <assimp/scene.h>

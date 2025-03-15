@@ -3,7 +3,7 @@
 #include "camera.h"
 #include "glwrapper/shader.h"
 #include "glwrapper/texture.h"
-#include "util/macro.h"
+#include "utils/macro.h"
 
 #include <glm/glm.hpp>
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "glwrapper/gl_object.h"
-#include "util/macro.h"
+#include "utils/macro.h"
 
 #include <glm/glm.hpp>
 

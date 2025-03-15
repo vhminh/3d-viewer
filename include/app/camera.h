@@ -1,7 +1,7 @@
 #pragma once
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <util/macro.h>
+#include <utils/macro.h>
 
 struct Camera {
 public:

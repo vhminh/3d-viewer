@@ -1,4 +1,4 @@
-#include "3dmodel/utils/ai_conversions.h"
+#include "3dmodel/utils/assimp_conversions.h"
 
 #include <iostream>
 

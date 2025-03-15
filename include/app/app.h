@@ -2,7 +2,7 @@
 
 #include <GLFW/glfw3.h>
 #include <tuple>
-#include <util/macro.h>
+#include <utils/macro.h>
 
 class App {
 public:

@@ -1,5 +1,5 @@
 #pragma once
-#include "util/macro.h"
+#include "utils/macro.h"
 #include "gl.h"
 
 class GLObject {

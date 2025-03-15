@@ -1,14 +1,16 @@
 #pragma once
 
-#include "3dmodel/model.h"
+#include "3dmodel/scene.h"
 #include "app/app.h"
 #include "app/camera.h"
 #include "glwrapper/shader.h"
 
+#include <vector>
+
 class X3DViewer : public App {
 public:
 	NO_COPY(X3DViewer);
-	X3DViewer(const char* title, int width, int height, const char* model_path);
+	X3DViewer(const char* title, int width, int height, const std::vector<const char*>& paths);
 	virtual void process_input(float dt) override;
 	virtual void update(float dt) override;
 	virtual void render() override;
@@ -16,7 +18,7 @@ public:
 private:
 	Camera camera;
 	Shader shader;
-	Model model;
+	Scene scene;
 
 	double update_fps_countdown = 1.0;
 	int frame_count = 0;

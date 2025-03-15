@@ -3,7 +3,7 @@
 #include "gl.h"
 #include "gl3.h"
 #include "stb_image.h"
-#include "util/error.h"
+#include "utils/error.h"
 
 Texture::Texture(GLuint id, TextureType type) : GLObject(id), type(type) {}
 

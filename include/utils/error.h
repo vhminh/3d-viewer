@@ -51,3 +51,14 @@ public:
 private:
 	std::string msg;
 };
+
+class ModelLoadingError : public std::exception {
+public:
+	ModelLoadingError(const std::string& path, const std::string& assimp_msg);
+	const char* what() const noexcept;
+
+private:
+	std::string path;
+	std::string assimp_msg;
+	std::string msg;
+};

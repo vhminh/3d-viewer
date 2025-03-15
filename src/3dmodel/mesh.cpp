@@ -3,7 +3,7 @@
 #include "app/config.h"
 #include "gl.h"
 #include "gl3.h"
-#include "util/util.h"
+#include "utils/util.h"
 
 #include <cstdio>
 #include <glm/ext/matrix_clip_space.hpp>

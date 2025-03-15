@@ -1,53 +1,79 @@
 #include "3dmodel/model.h"
 
-#include "3dmodel/mesh.h"
-#include "3dmodel/utils/ai_conversions.h"
+#include "3dmodel/utils/assimp_conversions.h"
 #include "app/config.h"
+#include "assimp/Importer.hpp"
 #include "assimp/light.h"
 #include "assimp/material.h"
 #include "assimp/types.h"
-#include "gl3.h"
+#include "utils/error.h"
+#include "utils/path.h"
 
 #include <array>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-#include <cstdlib>
-#include <cstring>
-#include <glm/ext/matrix_clip_space.hpp>
 #include <iostream>
 #include <stack>
-#include <vector>
 
-Vertex create_vertex(const aiVector3D& position, const aiVector3D& tangent, const aiVector3D& bitangent,
-                     const aiVector3D& normal, const std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords);
+// meshes
+std::vector<Mesh> load_meshes(ResourceManager&, const std::string& directory, const aiScene*);
+Mesh load_mesh(ResourceManager&, const std::string& directory, const aiScene*, const aiMesh*,
+               const glm::mat4& transform);
 
-std::string directory_of(const char* path) {
-	std::string directory = std::string(path);
-	directory.erase(directory.find_last_of('/'));
-	return directory;
-}
+// materials
+PBRMaterial load_material(ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*);
+std::optional<const char*> get_texture_path(const aiScene*, const aiMaterial*, TextureType);
+PBRColorTex load_color_texture(ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*,
+                               TextureType, const char* fallback_matkey, unsigned fallback_matkey_type,
+                               unsigned fallback_matkey_idx);
+PBROptTex load_texure_opt(ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*,
+                          TextureType);
+PBRPropTex load_float_texture(ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*,
+                              TextureType, const char* fallback_matkey, unsigned fallback_matkey_type,
+                              unsigned fallback_matkey_idx);
+PBRPropTex load_float_texture(ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*,
+                              TextureType, float fallback);
 
-Model::Model(const char* path) : directory(directory_of(path)) {
+// lights
+std::tuple<std::vector<DirectionalLight>, std::vector<PointLight>> load_lights(const aiScene*);
+
+Model::Model(ResourceManager& resource_manager, const char* path) : directory(directory_of(path)) {
+
+	Assimp::Importer importer;
 	const aiScene* scene =
 		importer.ReadFile(path, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_FlipUVs |
 	                                aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
 
 	if (!scene) {
-		std::cerr << "cannot load scene: " << importer.GetErrorString() << std::endl;
+		throw ModelLoadingError(path, importer.GetErrorString());
 	}
-
-	load_lights(scene);
-
-	load_meshes(scene);
 
 	std::cout << "lights: " << scene->mNumLights << std::endl;
 	std::cout << "cameras: " << scene->mNumCameras << std::endl;
 	std::cout << "materials: " << scene->mNumMaterials << std::endl;
 	std::cout << "meshes: " << scene->mNumMeshes << std::endl;
 	std::cout << "animations: " << scene->mNumAnimations << std::endl;
+
+	this->meshes = std::move(load_meshes(resource_manager, directory, scene));
+
+	std::tie(this->directional_lights, this->point_lights) = load_lights(scene);
+	assert(this->directional_lights.size() <= MAX_NUM_DIRECTIONAL_LIGHTS);
+	assert(this->point_lights.size() <= MAX_NUM_POINT_LIGHTS);
 }
 
-void Model::load_meshes(const aiScene* scene) {
+Model::Model(Model&& another) : directory(another.directory) {
+	meshes = std::move(another.meshes);
+	materials = std::move(another.materials);
+	directional_lights = std::move(another.directional_lights);
+	point_lights = std::move(another.point_lights);
+}
+
+const std::vector<DirectionalLight>& Model::get_directional_lights() const { return this->directional_lights; }
+
+const std::vector<PointLight>& Model::get_point_lights() const { return this->point_lights; }
+
+std::vector<Mesh> load_meshes(ResourceManager& resource_manager, const std::string& directory, const aiScene* scene) {
+	std::vector<Mesh> meshes;
 	std::stack<std::pair<aiNode*, glm::mat4>> stack;
 	stack.push(std::make_pair(scene->mRootNode, glm::mat4(1.0)));
 	while (stack.size()) {
@@ -58,16 +84,18 @@ void Model::load_meshes(const aiScene* scene) {
 
 		for (unsigned i = 0; i < node->mNumMeshes; ++i) {
 			unsigned mesh_idx = node->mMeshes[i];
-			this->meshes.emplace_back(load_mesh(scene, scene->mMeshes[mesh_idx], new_transform));
+			meshes.emplace_back(load_mesh(resource_manager, directory, scene, scene->mMeshes[mesh_idx], new_transform));
 		}
 
 		for (int i = 0; i < node->mNumChildren; ++i) {
 			stack.push(std::make_pair(node->mChildren[i], new_transform));
 		}
 	}
+	return meshes;
 }
 
-Mesh Model::load_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat4& transform) {
+Mesh load_mesh(ResourceManager& resource_manager, const std::string& directory, const aiScene* scene,
+               const aiMesh* mesh, const glm::mat4& transform) {
 	std::vector<Vertex> vertices;
 	vertices.reserve(mesh->mNumVertices);
 	for (int i = 0; i < mesh->mNumVertices; ++i) {
@@ -80,8 +108,9 @@ Mesh Model::load_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat4&
 				tex_coords[j] = glm::vec2(0.0, 0.0);
 			}
 		}
-		vertices.emplace_back(
-			create_vertex(mesh->mVertices[i], mesh->mTangents[i], mesh->mBitangents[i], mesh->mNormals[i], tex_coords));
+		vertices.emplace_back(from_ai_vec3(mesh->mVertices[i]), glm::normalize(from_ai_vec3(mesh->mTangents[i])),
+		                      glm::normalize(from_ai_vec3(mesh->mBitangents[i])),
+		                      glm::normalize(from_ai_vec3(mesh->mNormals[i])), tex_coords);
 	}
 
 	std::vector<GLuint> indices;
@@ -99,14 +128,8 @@ Mesh Model::load_mesh(const aiScene* scene, const aiMesh* mesh, const glm::mat4&
 	}
 	indices.shrink_to_fit();
 
-	PBRMaterial material = load_material(scene, scene->mMaterials[mesh->mMaterialIndex]);
+	PBRMaterial material = load_material(resource_manager, directory, scene, scene->mMaterials[mesh->mMaterialIndex]);
 	return Mesh(transform, std::move(vertices), std::move(indices), std::move(material));
-}
-
-Vertex create_vertex(const aiVector3D& position, const aiVector3D& tangent, const aiVector3D& bitangent,
-                     const aiVector3D& normal, const std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords) {
-	return Vertex(from_ai_vec3(position), glm::normalize(from_ai_vec3(tangent)),
-	              glm::normalize(from_ai_vec3(bitangent)), glm::normalize(from_ai_vec3(normal)), tex_coords);
 }
 
 std::ostream& operator<<(std::ostream& os, const aiColor3D& color) {
@@ -114,12 +137,17 @@ std::ostream& operator<<(std::ostream& os, const aiColor3D& color) {
 	return os;
 }
 
-PBRMaterial Model::load_material(const aiScene* scene, const aiMaterial* material) {
-	PBRColorTex albedo = load_color_texture(scene, material, TextureType::ALBEDO, AI_MATKEY_BASE_COLOR);
-	PBROptTex normals = load_texure_opt(scene, material, TextureType::NORMALS);
-	PBRPropTex metallic = load_float_texture(scene, material, TextureType::METALLIC, AI_MATKEY_METALLIC_FACTOR);
-	PBRPropTex roughness = load_float_texture(scene, material, TextureType::ROUGHNESS, AI_MATKEY_ROUGHNESS_FACTOR);
-	PBRPropTex ambient_occlusion = load_float_texture(scene, material, TextureType::AMBIENT_OCCLUSION, 1.0);
+PBRMaterial load_material(ResourceManager& resource_manager, const std::string& directory, const aiScene* scene,
+                          const aiMaterial* material) {
+	PBRColorTex albedo =
+		load_color_texture(resource_manager, directory, scene, material, TextureType::ALBEDO, AI_MATKEY_BASE_COLOR);
+	PBROptTex normals = load_texure_opt(resource_manager, directory, scene, material, TextureType::NORMALS);
+	PBRPropTex metallic = load_float_texture(resource_manager, directory, scene, material, TextureType::METALLIC,
+	                                         AI_MATKEY_METALLIC_FACTOR);
+	PBRPropTex roughness = load_float_texture(resource_manager, directory, scene, material, TextureType::ROUGHNESS,
+	                                          AI_MATKEY_ROUGHNESS_FACTOR);
+	PBRPropTex ambient_occlusion =
+		load_float_texture(resource_manager, directory, scene, material, TextureType::AMBIENT_OCCLUSION, 1.0);
 	unsigned albedo_uv_channel = 0;
 	material->Get(AI_MATKEY_UVWSRC(aiTextureType_BASE_COLOR, 0), albedo_uv_channel);
 	unsigned normals_uv_channel = 0;
@@ -133,17 +161,6 @@ PBRMaterial Model::load_material(const aiScene* scene, const aiMaterial* materia
 
 	return PBRMaterial(albedo, normals, metallic, roughness, ambient_occlusion, albedo_uv_channel, normals_uv_channel,
 	                   metallic_uv_channel, roughness_uv_channel, ao_uv_channel);
-}
-
-std::tuple<std::vector<unsigned char>, int, int> texture_data(const aiTexture* tex) {
-	if (tex->mHeight == 0) {
-		std::cerr << "TODO: support compressed embedded texture" << std::endl;
-		return std::make_tuple<std::vector<unsigned char>, int, int>(std::vector<unsigned char>(), 0, 0);
-	} else {
-		std::vector<unsigned char> data(tex->mWidth * tex->mHeight * 3);
-		std::cerr << "TODO: fill data for embedded texture" << std::endl;
-		return std::make_tuple(data, tex->mWidth, tex->mHeight);
-	}
 }
 
 std::optional<const char*> get_texture_path(const aiScene* scene, const aiMaterial* material,
@@ -161,23 +178,24 @@ std::optional<const char*> get_texture_path(const aiScene* scene, const aiMateri
 	}
 }
 
-PBROptTex Model::load_texure_opt(const aiScene* scene, const aiMaterial* material, TextureType type) {
+PBROptTex load_texure_opt(ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material,
+                          TextureType type) {
 	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
 	if (maybe_path) {
 		// has texture
-		return load_texture(scene, type, maybe_path.value());
+		return resource_manager.load_texture(scene, type, directory.c_str(), maybe_path.value());
 	} else {
 		return std::nullopt;
 	}
 }
 
-PBRColorTex Model::load_color_texture(const aiScene* scene, const aiMaterial* material, TextureType type,
-                                      const char* fallback_matkey, unsigned fallback_matkey_type,
-                                      unsigned fallback_matkey_idx) {
+PBRColorTex load_color_texture(ResourceManager& resource_manager, const std::string& directory, const aiScene* scene,
+                               const aiMaterial* material, TextureType type, const char* fallback_matkey,
+                               unsigned fallback_matkey_type, unsigned fallback_matkey_idx) {
 	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
 	if (maybe_path) {
 		// has texture
-		return load_texture(scene, type, maybe_path.value());
+		return resource_manager.load_texture(scene, type, directory.c_str(), maybe_path.value());
 	} else {
 		// fallback color
 		aiColor3D color;
@@ -186,13 +204,13 @@ PBRColorTex Model::load_color_texture(const aiScene* scene, const aiMaterial* ma
 	}
 }
 
-PBRPropTex Model::load_float_texture(const aiScene* scene, const aiMaterial* material, TextureType type,
-                                     const char* fallback_matkey, unsigned fallback_matkey_type,
-                                     unsigned fallback_matkey_idx) {
+PBRPropTex load_float_texture(ResourceManager& resource_manager, const std::string& directory, const aiScene* scene,
+                              const aiMaterial* material, TextureType type, const char* fallback_matkey,
+                              unsigned fallback_matkey_type, unsigned fallback_matkey_idx) {
 	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
 	if (maybe_path) {
 		// has texture
-		return load_texture(scene, type, maybe_path.value());
+		return resource_manager.load_texture(scene, type, directory.c_str(), maybe_path.value());
 	} else {
 		// fallback value
 		float value;
@@ -201,36 +219,15 @@ PBRPropTex Model::load_float_texture(const aiScene* scene, const aiMaterial* mat
 	}
 }
 
-PBRPropTex Model::load_float_texture(const aiScene* scene, const aiMaterial* material, TextureType type,
-                                     float fallback) {
+PBRPropTex load_float_texture(ResourceManager& resource_manager, const std::string& directory, const aiScene* scene,
+                              const aiMaterial* material, TextureType type, float fallback) {
 	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
 	if (maybe_path) {
 		// has texture
-		return load_texture(scene, type, maybe_path.value());
+		return resource_manager.load_texture(scene, type, directory.c_str(), maybe_path.value());
 	} else {
 		// fallback value
 		return fallback;
-	}
-}
-
-std::shared_ptr<Texture> Model::load_texture(const aiScene* scene, TextureType type, const char* rel_path) {
-	std::string path = directory + "/" + rel_path;
-	if (texture_by_path.contains(path)) {
-		return texture_by_path.at(path);
-	}
-	std::cerr << "load texture " << type << " " << rel_path << std::endl;
-	const aiTexture* embedded_texture = scene->GetEmbeddedTexture(rel_path);
-	if (embedded_texture) {
-		auto [data, w, h] = texture_data(embedded_texture);
-		std::shared_ptr<Texture> ptr = std::make_shared<Texture>(Texture::create(data.data(), w, h, type));
-		this->textures.push_back(ptr);
-		texture_by_path[path] = ptr;
-		return ptr;
-	} else {
-		std::shared_ptr<Texture> ptr = std::make_shared<Texture>(Texture::create(path.c_str(), type));
-		this->textures.push_back(ptr);
-		texture_by_path[path] = ptr;
-		return ptr;
 	}
 }
 
@@ -252,7 +249,10 @@ std::map<std::string_view, std::vector<glm::mat4>> transforms_by_node_name(const
 	return result;
 }
 
-void Model::load_lights(const aiScene* scene) {
+std::tuple<std::vector<DirectionalLight>, std::vector<PointLight>> load_lights(const aiScene* scene) {
+	std::vector<DirectionalLight> directional_lights;
+	std::vector<PointLight> point_lights;
+
 	std::map<std::string_view, std::vector<glm::mat4>> transforms_by_name = transforms_by_node_name(scene);
 	for (int i = 0; i < scene->mNumLights; ++i) {
 		aiLight* ai_light = scene->mLights[i];
@@ -289,57 +289,11 @@ void Model::load_lights(const aiScene* scene) {
 			}
 		}
 	}
-	assert(directional_lights.size() <= MAX_NUM_DIRECTIONAL_LIGHTS);
-	assert(point_lights.size() <= MAX_NUM_POINT_LIGHTS);
+	return std::make_tuple(directional_lights, point_lights);
 }
 
-void set_camera_view_transforms(Shader& shader, const Camera& camera) {
-	shader.setUniformMat4("view_mat", camera.get_view_matrix());
-	const glm::mat4 projection_mat =
-		glm::perspective(glm::radians(45.0), DEFAULT_WINDOW_WIDTH * 1.0 / DEFAULT_WINDOW_HEIGHT, 0.1, 100.0);
-	shader.setUniformMat4("projection_mat", projection_mat);
-	shader.setUniformVec3("camera_position", camera.origin);
-}
-
-void set_light_uniforms(Shader& shader, const std::vector<DirectionalLight>& directional_lights,
-                        const std::vector<PointLight>& point_lights) {
-	shader.setUniformInt("num_directional_lights", directional_lights.size());
-	shader.setUniformInt("num_point_lights", point_lights.size());
-	char buf[64];
-	for (int i = 0; i < directional_lights.size(); ++i) {
-		const DirectionalLight& light = directional_lights[i];
-		snprintf(buf, 63, "directional_lights[%d].color", i);
-		shader.setUniformVec3(buf, light.color);
-		snprintf(buf, 63, "directional_lights[%d].direction", i);
-		shader.setUniformVec3(buf, (float*)&light.direction);
-	}
-	for (int i = 0; i < point_lights.size(); ++i) {
-		const PointLight& light = point_lights[i];
-		snprintf(buf, 63, "point_lights[%d].color", i);
-		shader.setUniformVec3(buf, light.color);
-		snprintf(buf, 63, "point_lights[%d].attenuation.constant", i);
-		shader.setUniformFloat(buf, light.attenuation.constant);
-		snprintf(buf, 63, "point_lights[%d].attenuation.linear", i);
-		shader.setUniformFloat(buf, light.attenuation.linear);
-		snprintf(buf, 63, "point_lights[%d].attenuation.quadratic", i);
-		shader.setUniformFloat(buf, light.attenuation.quadratic);
-		snprintf(buf, 63, "point_lights[%d].position", i);
-		shader.setUniformVec3(buf, (float*)&light.position);
-	}
-}
-
-void Model::render(Shader& shader, const Camera& camera) const {
-	shader.use();
-
-	// TODO: make this a feature, not a hack lol
-	glm::vec3 light_color = glm::vec3(0.8, 0.8, 0.8);
-	PointLight player_light = PointLight(light_color, Attenuation(1.0, 0.14, 0.07),
-	                                     glm::vec3(camera.origin.x, camera.origin.y + 1.0, camera.origin.z));
-	std::vector<PointLight> point_lights = this->point_lights;
-	point_lights.push_back(player_light);
-
-	set_light_uniforms(shader, directional_lights, point_lights);
-	set_camera_view_transforms(shader, camera);
+void Model::render(Shader& shader, const Camera& camera, const std::vector<DirectionalLight>& directional_lights,
+                   const std::vector<PointLight>& point_lights) const {
 	for (const Mesh& mesh : this->meshes) {
 		mesh.render(shader, camera, directional_lights, point_lights);
 	}

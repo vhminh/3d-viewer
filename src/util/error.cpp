@@ -1,44 +1,41 @@
-#include "util/error.h"
+#include "utils/error.h"
 
-FileNotFoundException::FileNotFoundException(const std::string& path)
-	: file_path(path) {
-	if (path.length() > 0) {
-		msg = std::string("Cannot open file \"" + path + "\"");
-	}
+#include <sstream>
+
+FileNotFoundException::FileNotFoundException(const std::string& path) : file_path(path) {
+	std::ostringstream ss(msg);
+	ss << "cannot open file \"" << path << "\"";
 }
 
 const std::string& FileNotFoundException::get_file_path() { return file_path; }
 
 const char* FileNotFoundException::what() const noexcept { return msg.c_str(); }
 
-ImageLoadingException::ImageLoadingException(const std::string& path)
-	: file_path(path) {
-	if (path.length() > 0) {
-		msg = std::string("Cannot load image file \"" + path + "\"");
-	}
+ImageLoadingException::ImageLoadingException(const std::string& path) : file_path(path) {
+	std::ostringstream ss(msg);
+	ss << "cannot load image file file \"" << path << "\"";
 }
 
 const std::string& ImageLoadingException::get_file_path() { return file_path; }
 
 const char* ImageLoadingException::what() const noexcept { return msg.c_str(); }
 
-ShaderCompilationException::ShaderCompilationException(const std::string& msg)
-	: msg(msg) {}
+ShaderCompilationException::ShaderCompilationException(const std::string& msg) : msg(msg) {}
 
-const char* ShaderCompilationException::what() const noexcept {
-	return msg.c_str();
+const char* ShaderCompilationException::what() const noexcept { return msg.c_str(); }
+
+ProgramLinkageException::ProgramLinkageException(const std::string& msg) : msg(msg) {}
+
+const char* ProgramLinkageException::what() const noexcept { return msg.c_str(); }
+
+WindowCreationException::WindowCreationException(const std::string& msg) : msg(msg) {}
+
+const char* WindowCreationException::what() const noexcept { return msg.c_str(); }
+
+ModelLoadingError::ModelLoadingError(const std::string& path, const std::string& assimp_msg)
+	: path(path), assimp_msg(assimp_msg) {
+	std::ostringstream ss(msg);
+	ss << "cannot load model file \"" << path << "\": " << assimp_msg;
 }
 
-ProgramLinkageException::ProgramLinkageException(const std::string& msg)
-	: msg(msg) {}
-
-const char* ProgramLinkageException::what() const noexcept {
-	return msg.c_str();
-}
-
-WindowCreationException::WindowCreationException(const std::string& msg)
-	: msg(msg) {}
-
-const char* WindowCreationException::what() const noexcept {
-	return msg.c_str();
-}
+const char* ModelLoadingError::what() const noexcept { return msg.c_str(); }

@@ -1,5 +1,8 @@
 #pragma once
 
+const int MAX_NUM_DIRECTIONAL_LIGHTS = 8;
+const int MAX_NUM_POINT_LIGHTS = 24;
+
 const double EPSILON = 0.000001;
 
 const int DEFAULT_WINDOW_WIDTH = 1200;

@@ -1,7 +1,7 @@
 #include "glwrapper/shader.h"
 
 #include "gl3.h"
-#include "util/error.h"
+#include "utils/error.h"
 
 #include <fstream>
 #include <glm/gtc/type_ptr.hpp>
