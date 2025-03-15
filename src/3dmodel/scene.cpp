@@ -1,23 +1,14 @@
 #include "3dmodel/scene.h"
 
-#include "3dmodel/mesh.h"
-#include "3dmodel/utils/assimp_conversions.h"
 #include "app/config.h"
-#include "assimp/light.h"
-#include "assimp/material.h"
-#include "assimp/types.h"
 #include "gl3.h"
 
-#include <array>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <cstdlib>
 #include <cstring>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <vector>
-
-Vertex create_vertex(const aiVector3D& position, const aiVector3D& tangent, const aiVector3D& bitangent,
-                     const aiVector3D& normal, const std::array<glm::vec2, MAX_NUM_UV_CHANNELS> tex_coords);
 
 Scene::Scene(const std::vector<const char*>& paths) {
 	for (const char* path : paths) {
@@ -79,6 +70,6 @@ void Scene::render(Shader& shader, const Camera& camera) const {
 	set_light_uniforms(shader, directional_lights, point_lights);
 	set_camera_view_transforms(shader, camera);
 	for (const Model& model : this->models) {
-		model.render(shader, camera, directional_lights, point_lights);
+		model.render(shader);
 	}
 }

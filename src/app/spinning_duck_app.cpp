@@ -9,12 +9,11 @@
 #include <string>
 
 SpinningDuckApp::SpinningDuckApp(const char* title, int width, int height)
-	: App(title, width, height),
+	: App(title, width, height), camera(glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0),
 	  shader(Shader::create("resource/shader/spinning_duck.v.glsl", "resource/shader/spinning_duck.f.glsl")),
 	  light_shader(Shader::create("resource/shader/spinning_duck.v.glsl", "resource/shader/white.f.glsl")),
 	  duck(Texture::create("resource/texture/duck.jpg", TextureType::ALBEDO)),
-	  grass(Texture::create("resource/texture/grass.png", TextureType::ALBEDO)),
-	  camera(glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0) {
+	  grass(Texture::create("resource/texture/grass.png", TextureType::ALBEDO)) {
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -209,7 +208,7 @@ void SpinningDuckApp::process_camera_keyboard_input(float dt) {
 	camera.origin += move_vec;
 }
 
-void SpinningDuckApp::process_camera_mouse_input(float dt) {
+void SpinningDuckApp::process_camera_mouse_input() {
 	double x, y;
 	glfwGetCursorPos(window, &x, &y);
 	glm::dvec2 cur_cursor_pos = glm::dvec2(x, y);
@@ -235,7 +234,7 @@ void SpinningDuckApp::process_input(float dt) {
 		glfwSetWindowShouldClose(window, true);
 	}
 	process_camera_keyboard_input(dt);
-	process_camera_mouse_input(dt);
+	process_camera_mouse_input();
 }
 
 void SpinningDuckApp::update(float dt) {

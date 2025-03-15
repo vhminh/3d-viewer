@@ -6,9 +6,8 @@
 #include <iostream>
 
 X3DViewer::X3DViewer(const char* title, int width, int height, const std::vector<const char*>& paths)
-	: App(title, width, height),
-	  shader(Shader::create("resource/shader/3d_viewer.v.glsl", "resource/shader/3d_viewer.f.glsl")),
-	  camera(glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0), scene(paths) {
+	: App(title, width, height), camera(glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0),
+	  shader(Shader::create("resource/shader/3d_viewer.v.glsl", "resource/shader/3d_viewer.f.glsl")), scene(paths) {
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
@@ -45,7 +44,7 @@ void X3DViewer::process_camera_keyboard_input(float dt) {
 	camera.origin += move_vec;
 }
 
-void X3DViewer::process_camera_mouse_input(float dt) {
+void X3DViewer::process_camera_mouse_input() {
 	double x, y;
 	glfwGetCursorPos(window, &x, &y);
 	glm::dvec2 cur_cursor_pos = glm::dvec2(x, y);
@@ -82,7 +81,7 @@ void X3DViewer::process_input(float dt) {
 		}
 	}
 	process_camera_keyboard_input(dt);
-	process_camera_mouse_input(dt);
+	process_camera_mouse_input();
 }
 
 void X3DViewer::update(float dt) {

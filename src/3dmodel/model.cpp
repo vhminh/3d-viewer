@@ -292,9 +292,8 @@ std::tuple<std::vector<DirectionalLight>, std::vector<PointLight>> load_lights(c
 	return std::make_tuple(directional_lights, point_lights);
 }
 
-void Model::render(Shader& shader, const Camera& camera, const std::vector<DirectionalLight>& directional_lights,
-                   const std::vector<PointLight>& point_lights) const {
+void Model::render(Shader& shader) const  {
 	for (const Mesh& mesh : this->meshes) {
-		mesh.render(shader, camera, directional_lights, point_lights);
+		mesh.render(shader);
 	}
 }

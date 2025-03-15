@@ -2,7 +2,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-Camera::Camera(glm::vec3 origin, float yaw, float pitch) : origin(origin), yaw(yaw), pitch(pitch) {}
+Camera::Camera(glm::vec3 origin, float yaw, float pitch) : origin(origin), pitch(pitch), yaw(yaw) {}
 
 const glm::vec3 Camera::get_direction() const {
 	float x = sin(glm::radians(yaw)) * cos(glm::radians(pitch));

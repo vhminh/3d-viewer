@@ -40,7 +40,7 @@ Mesh::Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLui
 
 Mesh::Mesh(Mesh&& another)
 	: transform(another.transform), vertices(std::move(another.vertices)), indices(std::move(another.indices)),
-	  material(std::move(another.material)), va(another.va), vb(another.vb), eb(another.eb) {
+	  material(std::move(another.material)), vb(another.vb), va(another.va), eb(another.eb) {
 	another.va = GLObject::ID_NONE;
 	another.vb = GLObject::ID_NONE;
 	another.eb = GLObject::ID_NONE;
@@ -117,8 +117,7 @@ void bind_material(Shader& shader, const PBRMaterial& material) {
 	}
 }
 
-void Mesh::render(Shader& shader, const Camera& camera, const std::vector<DirectionalLight>& directional_lights,
-                  const std::vector<PointLight>& point_lights) const {
+void Mesh::render(Shader& shader) const {
 	set_mesh_local_transform(shader, transform);
 	bind_material(shader, material);
 

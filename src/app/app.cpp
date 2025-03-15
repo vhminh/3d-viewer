@@ -3,7 +3,7 @@
 #include "gl.h"
 #include "utils/error.h"
 
-void on_framebuffer_resize(GLFWwindow* window, int new_width, int new_height) {
+void on_framebuffer_resize([[maybe_unused]] GLFWwindow* window, int new_width, int new_height) {
 	glViewport(0, 0, new_width, new_height);
 }
 

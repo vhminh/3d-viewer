@@ -6,21 +6,18 @@
 int main() {
 
 	/* SpinningDuckApp app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT); */
+
 	/* X3DViewer app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, */
-	/*               "/Users/mvu/Downloads/uploads_files_2465920_burger_merged.glb"); */
+	/*               {"/home/minh/Downloads/intel_sponza/main1_sponza/NewSponza_Main_glTF_003.gltf", */
+	/*                "/home/minh/Downloads/intel_sponza/main1_sponza/NewSponza_Curtains_glTF.gltf"}); */
 	/* X3DViewer app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, */
-	/*               "/home/minh/projects/glTF-Sample-Assets/Models/Sponza/glTF/Sponza.gltf"); */
-	/* X3DViewer app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, */
-	/*               "/Users/mvu/Downloads/intel_sponza/NewSponza_Main_glTF_003.gltf"); */
-	/* X3DViewer app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, */
-	/*               "/home/minh/Downloads/intel_sponza/main1_sponza/NewSponza_Main_glTF_003.gltf"); */
-	/* X3DViewer app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, */
-	/*               "/home/minh/Downloads/intel_sponza_downscaled/main1_sponza/NewSponza_Main_glTF_003.gltf"); */
-	/* X3DViewer app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, */
-	/*               "/Users/mvu/Downloads/intel_sponza_downscaled/NewSponza_Main_glTF_003.gltf"); */
+	/*               {"/Users/mvu/Downloads/intel_sponza/NewSponza_Main_glTF_003.gltf"}); */
+
 	X3DViewer app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT,
 	              {"/home/minh/Downloads/intel_sponza_downscaled/main1_sponza/NewSponza_Main_glTF_003.gltf",
 	               "/home/minh/Downloads/intel_sponza_downscaled/main1_sponza/NewSponza_Curtains_glTF.gltf"});
+	/* X3DViewer app("3D viewer", DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT, */
+	/*               {"/Users/mvu/Downloads/intel_sponza_downscaled/NewSponza_Main_glTF_003.gltf"}); */
 
 	double prev_time = glfwGetTime();
 

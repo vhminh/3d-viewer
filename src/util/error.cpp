@@ -3,8 +3,9 @@
 #include <sstream>
 
 FileNotFoundException::FileNotFoundException(const std::string& path) : file_path(path) {
-	std::ostringstream ss(msg);
+	std::ostringstream ss;
 	ss << "cannot open file \"" << path << "\"";
+	msg = ss.str();
 }
 
 const std::string& FileNotFoundException::get_file_path() { return file_path; }
@@ -12,8 +13,9 @@ const std::string& FileNotFoundException::get_file_path() { return file_path; }
 const char* FileNotFoundException::what() const noexcept { return msg.c_str(); }
 
 ImageLoadingException::ImageLoadingException(const std::string& path) : file_path(path) {
-	std::ostringstream ss(msg);
+	std::ostringstream ss;
 	ss << "cannot load image file file \"" << path << "\"";
+	msg = ss.str();
 }
 
 const std::string& ImageLoadingException::get_file_path() { return file_path; }
@@ -34,8 +36,9 @@ const char* WindowCreationException::what() const noexcept { return msg.c_str();
 
 ModelLoadingError::ModelLoadingError(const std::string& path, const std::string& assimp_msg)
 	: path(path), assimp_msg(assimp_msg) {
-	std::ostringstream ss(msg);
+	std::ostringstream ss;
 	ss << "cannot load model file \"" << path << "\": " << assimp_msg;
+	msg = ss.str();
 }
 
 const char* ModelLoadingError::what() const noexcept { return msg.c_str(); }
