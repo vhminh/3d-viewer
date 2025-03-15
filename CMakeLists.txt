@@ -30,7 +30,11 @@ add_executable(3d-viewer ${SOURCE_FILES})
 set_property(TARGET 3d-viewer PROPERTY CXX_STANDARD 20)
 target_include_directories(3d-viewer PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(3d-viewer PRIVATE ${FETCHCONTENT_BASE_DIR}/assimp-src/include)
-set_property(TARGET 3d-viewer PROPERTY COMPILE_FLAGS "-O2 -Wall -Wextra -Wno-sign-compare")
+set_property(TARGET 3d-viewer PROPERTY COMPILE_FLAGS "-O2 -Wall -Wextra -Wno-sign-compare -Werror")
+set_source_files_properties(
+  ${CMAKE_SOURCE_DIR}/src/stb_image.cpp
+  PROPERTIES COMPILE_FLAGS "-O2 -Wno-error -Wno-all"
+)
 target_link_libraries(3d-viewer ${LIBS})
 
 # misc

@@ -1,13 +1,11 @@
 #include "3dmodel/mesh.h"
 
-#include "app/config.h"
 #include "gl.h"
 #include "gl3.h"
 #include "utils/util.h"
 
 #include <cstdio>
 #include <glm/ext/matrix_clip_space.hpp>
-#include <iostream>
 
 Mesh::Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices, PBRMaterial&& material) :
 	transform(transform), vertices(std::move(vertices)), indices(std::move(indices)), material(std::move(material)) {

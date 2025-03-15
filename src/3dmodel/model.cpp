@@ -23,7 +23,7 @@ Mesh load_mesh(
 
 // materials
 PBRMaterial load_material(ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*);
-std::optional<const char*> get_texture_path(const aiScene*, const aiMaterial*, TextureType);
+std::optional<const char*> get_texture_path(const aiMaterial*, TextureType);
 PBRColorTex load_color_texture(
 	ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*, TextureType,
 	const char* fallback_matkey, unsigned fallback_matkey_type, unsigned fallback_matkey_idx
@@ -61,7 +61,7 @@ Model::Model(ResourceManager& resource_manager, const char* path) : directory(di
 	std::cout << "meshes: " << scene->mNumMeshes << std::endl;
 	std::cout << "animations: " << scene->mNumAnimations << std::endl;
 
-	this->meshes = std::move(load_meshes(resource_manager, directory, scene));
+	this->meshes = load_meshes(resource_manager, directory, scene);
 
 	std::tie(this->directional_lights, this->point_lights) = load_lights(scene);
 	assert(this->directional_lights.size() <= MAX_NUM_DIRECTIONAL_LIGHTS);
@@ -193,9 +193,7 @@ PBRMaterial load_material(
 	);
 }
 
-std::optional<const char*> get_texture_path(
-	const aiScene* scene, const aiMaterial* material, TextureType texture_type
-) {
+std::optional<const char*> get_texture_path(const aiMaterial* material, TextureType texture_type) {
 	aiTextureType ai_type = to_ai_texture_type(texture_type);
 	std::cerr << "Material " << material->GetName().C_Str() << ", texture type: " << texture_type
 			  << ", count: " << material->GetTextureCount(ai_type) << std::endl;
@@ -213,7 +211,7 @@ PBROptTex load_texure_opt(
 	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material,
 	TextureType type
 ) {
-	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
+	std::optional<const char*> maybe_path = get_texture_path(material, type);
 	if (maybe_path) {
 		// has texture
 		return resource_manager.load_texture(scene, type, directory.c_str(), maybe_path.value());
@@ -226,7 +224,7 @@ PBRColorTex load_color_texture(
 	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material,
 	TextureType type, const char* fallback_matkey, unsigned fallback_matkey_type, unsigned fallback_matkey_idx
 ) {
-	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
+	std::optional<const char*> maybe_path = get_texture_path(material, type);
 	if (maybe_path) {
 		// has texture
 		return resource_manager.load_texture(scene, type, directory.c_str(), maybe_path.value());
@@ -242,7 +240,7 @@ PBRPropTex load_float_texture(
 	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material,
 	TextureType type, const char* fallback_matkey, unsigned fallback_matkey_type, unsigned fallback_matkey_idx
 ) {
-	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
+	std::optional<const char*> maybe_path = get_texture_path(material, type);
 	if (maybe_path) {
 		// has texture
 		return resource_manager.load_texture(scene, type, directory.c_str(), maybe_path.value());
@@ -258,7 +256,7 @@ PBRPropTex load_float_texture(
 	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material,
 	TextureType type, float fallback
 ) {
-	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
+	std::optional<const char*> maybe_path = get_texture_path(material, type);
 	if (maybe_path) {
 		// has texture
 		return resource_manager.load_texture(scene, type, directory.c_str(), maybe_path.value());
