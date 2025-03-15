@@ -1,5 +1,6 @@
 #pragma once
 #include "glwrapper/texture.h"
+
 #include <assimp/scene.h>
 #include <glm/glm.hpp>
 

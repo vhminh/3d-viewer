@@ -12,7 +12,9 @@ public:
 	NO_COPY(ResourceManager);
 	NO_MOVE(ResourceManager);
 
-	std::shared_ptr<Texture> load_texture(const aiScene* scene, TextureType type, const char* directory, const char* relative_path);
+	std::shared_ptr<Texture> load_texture(
+		const aiScene* scene, TextureType type, const char* directory, const char* relative_path
+	);
 	std::shared_ptr<Texture> load_texture(const aiScene* scene, TextureType type, const char* path);
 
 private:

@@ -33,7 +33,9 @@ App::App(const char* title, int width, int height) {
 	glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
-App::~App() { glfwTerminate(); }
+App::~App() {
+	glfwTerminate();
+}
 
 int App::get_width() const {
 	int w, h;
@@ -53,11 +55,15 @@ std::tuple<int, int> App::get_size() const {
 	return std::make_tuple(w, h);
 }
 
-bool App::should_close() const { return glfwWindowShouldClose(window); }
+bool App::should_close() const {
+	return glfwWindowShouldClose(window);
+}
 
 void App::clear() const {
 	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void App::poll_event() const { glfwPollEvents(); }
+void App::poll_event() const {
+	glfwPollEvents();
+}

@@ -31,8 +31,9 @@ Texture Texture::create(const char* path, TextureType type, int wrap_s, int wrap
 	return texture;
 }
 
-Texture Texture::create(unsigned char* data, int w, int h, TextureType type, int wrap_s, int wrap_t, int min_filter,
-                        int mag_filter) {
+Texture Texture::create(
+	unsigned char* data, int w, int h, TextureType type, int wrap_s, int wrap_t, int min_filter, int mag_filter
+) {
 	// texture wrap
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
@@ -62,7 +63,9 @@ Texture Texture::create(unsigned char* data, int w, int h, TextureType type, int
 	return Texture(id, type);
 }
 
-Texture::Texture(Texture&& another) : GLObject(another.id), type(another.type) { another.id = ID_NONE; }
+Texture::Texture(Texture&& another) : GLObject(another.id), type(another.type) {
+	another.id = ID_NONE;
+}
 
 Texture& Texture::operator=(Texture&& another) {
 	if (this == &another) {
@@ -83,4 +86,6 @@ Texture::~Texture() {
 	}
 }
 
-TextureType Texture::get_type() const { return this->type; }
+TextureType Texture::get_type() const {
+	return this->type;
+}

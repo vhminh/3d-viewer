@@ -5,9 +5,9 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-X3DViewer::X3DViewer(const char* title, int width, int height, const std::vector<const char*>& paths)
-	: App(title, width, height), camera(glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0),
-	  shader(Shader::create("resource/shader/3d_viewer.v.glsl", "resource/shader/3d_viewer.f.glsl")), scene(paths) {
+X3DViewer::X3DViewer(const char* title, int width, int height, const std::vector<const char*>& paths) :
+	App(title, width, height), camera(glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0),
+	shader(Shader::create("resource/shader/3d_viewer.v.glsl", "resource/shader/3d_viewer.f.glsl")), scene(paths) {
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 

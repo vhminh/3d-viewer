@@ -6,6 +6,11 @@ ColumnLimit: 120
 BreakBeforeBraces: Attach
 DerivePointerAlignment: false
 PointerAlignment: Left
+AlignAfterOpenBracket: BlockIndent
+PenaltyReturnTypeOnItsOwnLine: 1000
+AllowShortFunctionsOnASingleLine: Inline
+BinPackArguments: false
+BreakConstructorInitializers: AfterColon
 AllowShortIfStatementsOnASingleLine: false
 IndentCaseLabels: false
 AccessModifierOffset: -4

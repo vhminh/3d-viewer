@@ -40,8 +40,9 @@ public:
 		if (!success) {
 			char err_msg[1024];
 			glGetShaderInfoLog(shader.id, 1024, NULL, err_msg);
-			throw ShaderCompilationException(std::string("Error compile shader from source file \"") + path +
-			                                 "\": " + std::string(err_msg));
+			throw ShaderCompilationException(
+				std::string("Error compile shader from source file \"") + path + "\": " + std::string(err_msg)
+			);
 		}
 		return shader;
 	}
@@ -76,7 +77,9 @@ Shader Shader::create(const char* vertex_shader_path, const char* fragment_shade
 
 Shader::Shader(GLuint id) : GLObject(id) {}
 
-Shader::Shader(Shader&& another) : GLObject(another.id) { another.id = GLObject::ID_NONE; }
+Shader::Shader(Shader&& another) : GLObject(another.id) {
+	another.id = GLObject::ID_NONE;
+}
 
 Shader& Shader::operator=(Shader&& another) {
 	if (this == &another) {
@@ -90,7 +93,9 @@ Shader& Shader::operator=(Shader&& another) {
 	return *this;
 }
 
-void Shader::use() const { glUseProgram(id); }
+void Shader::use() const {
+	glUseProgram(id);
+}
 
 void Shader::setUniformBool(const char* name, bool value) {
 	GLint loc = glGetUniformLocation(id, name);

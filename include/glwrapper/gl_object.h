@@ -1,6 +1,6 @@
 #pragma once
-#include "utils/macro.h"
 #include "gl.h"
+#include "utils/macro.h"
 
 class GLObject {
 public:

@@ -9,8 +9,8 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <iostream>
 
-Mesh::Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices, PBRMaterial&& material)
-	: transform(transform), vertices(std::move(vertices)), indices(std::move(indices)), material(std::move(material)) {
+Mesh::Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLuint>&& indices, PBRMaterial&& material) :
+	transform(transform), vertices(std::move(vertices)), indices(std::move(indices)), material(std::move(material)) {
 
 	glGenVertexArrays(1, &va);
 	glBindVertexArray(va);
@@ -29,8 +29,9 @@ Mesh::Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLui
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, bitangent));
 	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-	glVertexAttribPointer(4, 2 * MAX_NUM_UV_CHANNELS, GL_FLOAT, GL_FALSE, sizeof(Vertex),
-	                      (void*)offsetof(Vertex, tex_coords));
+	glVertexAttribPointer(
+		4, 2 * MAX_NUM_UV_CHANNELS, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tex_coords)
+	);
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
@@ -38,9 +39,9 @@ Mesh::Mesh(glm::mat4 transform, std::vector<Vertex>&& vertices, std::vector<GLui
 	glEnableVertexAttribArray(4);
 }
 
-Mesh::Mesh(Mesh&& another)
-	: transform(another.transform), vertices(std::move(another.vertices)), indices(std::move(another.indices)),
-	  material(std::move(another.material)), vb(another.vb), va(another.va), eb(another.eb) {
+Mesh::Mesh(Mesh&& another) :
+	transform(another.transform), vertices(std::move(another.vertices)), indices(std::move(another.indices)),
+	material(std::move(another.material)), vb(another.vb), va(another.va), eb(another.eb) {
 	another.va = GLObject::ID_NONE;
 	another.vb = GLObject::ID_NONE;
 	another.eb = GLObject::ID_NONE;

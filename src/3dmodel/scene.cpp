@@ -15,8 +15,9 @@ Scene::Scene(const std::vector<const char*>& paths) {
 		Model& model = models.emplace_back(resource_manager, path);
 		auto directional_lights = model.get_directional_lights();
 		auto point_lights = model.get_point_lights();
-		this->directional_lights.insert(this->directional_lights.end(), directional_lights.begin(),
-		                                directional_lights.end());
+		this->directional_lights.insert(
+			this->directional_lights.end(), directional_lights.begin(), directional_lights.end()
+		);
 		this->point_lights.insert(this->point_lights.end(), point_lights.begin(), point_lights.end());
 	}
 }
@@ -29,8 +30,9 @@ void set_camera_view_transforms(Shader& shader, const Camera& camera) {
 	shader.setUniformVec3("camera_position", camera.origin);
 }
 
-void set_light_uniforms(Shader& shader, const std::vector<DirectionalLight>& directional_lights,
-                        const std::vector<PointLight>& point_lights) {
+void set_light_uniforms(
+	Shader& shader, const std::vector<DirectionalLight>& directional_lights, const std::vector<PointLight>& point_lights
+) {
 	shader.setUniformInt("num_directional_lights", directional_lights.size());
 	shader.setUniformInt("num_point_lights", point_lights.size());
 	char buf[64];
@@ -61,8 +63,9 @@ void Scene::render(Shader& shader, const Camera& camera) const {
 
 	// TODO: make this a feature, not a hack lol
 	glm::vec3 light_color = glm::vec3(0.8, 0.8, 0.8);
-	PointLight player_light = PointLight(light_color, Attenuation(1.0, 0.14, 0.07),
-	                                     glm::vec3(camera.origin.x, camera.origin.y + 1.0, camera.origin.z));
+	PointLight player_light = PointLight(
+		light_color, Attenuation(1.0, 0.14, 0.07), glm::vec3(camera.origin.x, camera.origin.y + 1.0, camera.origin.z)
+	);
 
 	std::vector<PointLight> point_lights = this->point_lights;
 	point_lights.push_back(player_light);

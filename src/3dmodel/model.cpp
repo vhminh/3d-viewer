@@ -17,22 +17,27 @@
 
 // meshes
 std::vector<Mesh> load_meshes(ResourceManager&, const std::string& directory, const aiScene*);
-Mesh load_mesh(ResourceManager&, const std::string& directory, const aiScene*, const aiMesh*,
-               const glm::mat4& transform);
+Mesh load_mesh(
+	ResourceManager&, const std::string& directory, const aiScene*, const aiMesh*, const glm::mat4& transform
+);
 
 // materials
 PBRMaterial load_material(ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*);
 std::optional<const char*> get_texture_path(const aiScene*, const aiMaterial*, TextureType);
-PBRColorTex load_color_texture(ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*,
-                               TextureType, const char* fallback_matkey, unsigned fallback_matkey_type,
-                               unsigned fallback_matkey_idx);
-PBROptTex load_texure_opt(ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*,
-                          TextureType);
-PBRPropTex load_float_texture(ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*,
-                              TextureType, const char* fallback_matkey, unsigned fallback_matkey_type,
-                              unsigned fallback_matkey_idx);
-PBRPropTex load_float_texture(ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*,
-                              TextureType, float fallback);
+PBRColorTex load_color_texture(
+	ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*, TextureType,
+	const char* fallback_matkey, unsigned fallback_matkey_type, unsigned fallback_matkey_idx
+);
+PBROptTex load_texure_opt(
+	ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*, TextureType
+);
+PBRPropTex load_float_texture(
+	ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*, TextureType,
+	const char* fallback_matkey, unsigned fallback_matkey_type, unsigned fallback_matkey_idx
+);
+PBRPropTex load_float_texture(
+	ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*, TextureType, float fallback
+);
 
 // lights
 std::tuple<std::vector<DirectionalLight>, std::vector<PointLight>> load_lights(const aiScene*);
@@ -40,9 +45,11 @@ std::tuple<std::vector<DirectionalLight>, std::vector<PointLight>> load_lights(c
 Model::Model(ResourceManager& resource_manager, const char* path) : directory(directory_of(path)) {
 
 	Assimp::Importer importer;
-	const aiScene* scene =
-		importer.ReadFile(path, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_FlipUVs |
-	                                aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
+	const aiScene* scene = importer.ReadFile(
+		path,
+		aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices |
+			aiProcess_SortByPType
+	);
 
 	if (!scene) {
 		throw ModelLoadingError(path, importer.GetErrorString());
@@ -68,9 +75,13 @@ Model::Model(Model&& another) : directory(another.directory) {
 	point_lights = std::move(another.point_lights);
 }
 
-const std::vector<DirectionalLight>& Model::get_directional_lights() const { return this->directional_lights; }
+const std::vector<DirectionalLight>& Model::get_directional_lights() const {
+	return this->directional_lights;
+}
 
-const std::vector<PointLight>& Model::get_point_lights() const { return this->point_lights; }
+const std::vector<PointLight>& Model::get_point_lights() const {
+	return this->point_lights;
+}
 
 std::vector<Mesh> load_meshes(ResourceManager& resource_manager, const std::string& directory, const aiScene* scene) {
 	std::vector<Mesh> meshes;
@@ -94,8 +105,10 @@ std::vector<Mesh> load_meshes(ResourceManager& resource_manager, const std::stri
 	return meshes;
 }
 
-Mesh load_mesh(ResourceManager& resource_manager, const std::string& directory, const aiScene* scene,
-               const aiMesh* mesh, const glm::mat4& transform) {
+Mesh load_mesh(
+	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMesh* mesh,
+	const glm::mat4& transform
+) {
 	std::vector<Vertex> vertices;
 	vertices.reserve(mesh->mNumVertices);
 	for (int i = 0; i < mesh->mNumVertices; ++i) {
@@ -108,9 +121,13 @@ Mesh load_mesh(ResourceManager& resource_manager, const std::string& directory, 
 				tex_coords[j] = glm::vec2(0.0, 0.0);
 			}
 		}
-		vertices.emplace_back(from_ai_vec3(mesh->mVertices[i]), glm::normalize(from_ai_vec3(mesh->mTangents[i])),
-		                      glm::normalize(from_ai_vec3(mesh->mBitangents[i])),
-		                      glm::normalize(from_ai_vec3(mesh->mNormals[i])), tex_coords);
+		vertices.emplace_back(
+			from_ai_vec3(mesh->mVertices[i]),
+			glm::normalize(from_ai_vec3(mesh->mTangents[i])),
+			glm::normalize(from_ai_vec3(mesh->mBitangents[i])),
+			glm::normalize(from_ai_vec3(mesh->mNormals[i])),
+			tex_coords
+		);
 	}
 
 	std::vector<GLuint> indices;
@@ -137,15 +154,18 @@ std::ostream& operator<<(std::ostream& os, const aiColor3D& color) {
 	return os;
 }
 
-PBRMaterial load_material(ResourceManager& resource_manager, const std::string& directory, const aiScene* scene,
-                          const aiMaterial* material) {
+PBRMaterial load_material(
+	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material
+) {
 	PBRColorTex albedo =
 		load_color_texture(resource_manager, directory, scene, material, TextureType::ALBEDO, AI_MATKEY_BASE_COLOR);
 	PBROptTex normals = load_texure_opt(resource_manager, directory, scene, material, TextureType::NORMALS);
-	PBRPropTex metallic = load_float_texture(resource_manager, directory, scene, material, TextureType::METALLIC,
-	                                         AI_MATKEY_METALLIC_FACTOR);
-	PBRPropTex roughness = load_float_texture(resource_manager, directory, scene, material, TextureType::ROUGHNESS,
-	                                          AI_MATKEY_ROUGHNESS_FACTOR);
+	PBRPropTex metallic = load_float_texture(
+		resource_manager, directory, scene, material, TextureType::METALLIC, AI_MATKEY_METALLIC_FACTOR
+	);
+	PBRPropTex roughness = load_float_texture(
+		resource_manager, directory, scene, material, TextureType::ROUGHNESS, AI_MATKEY_ROUGHNESS_FACTOR
+	);
 	PBRPropTex ambient_occlusion =
 		load_float_texture(resource_manager, directory, scene, material, TextureType::AMBIENT_OCCLUSION, 1.0);
 	unsigned albedo_uv_channel = 0;
@@ -159,12 +179,23 @@ PBRMaterial load_material(ResourceManager& resource_manager, const std::string& 
 	unsigned ao_uv_channel = 0;
 	material->Get(AI_MATKEY_UVWSRC(aiTextureType_AMBIENT_OCCLUSION, 0), ao_uv_channel);
 
-	return PBRMaterial(albedo, normals, metallic, roughness, ambient_occlusion, albedo_uv_channel, normals_uv_channel,
-	                   metallic_uv_channel, roughness_uv_channel, ao_uv_channel);
+	return PBRMaterial(
+		albedo,
+		normals,
+		metallic,
+		roughness,
+		ambient_occlusion,
+		albedo_uv_channel,
+		normals_uv_channel,
+		metallic_uv_channel,
+		roughness_uv_channel,
+		ao_uv_channel
+	);
 }
 
-std::optional<const char*> get_texture_path(const aiScene* scene, const aiMaterial* material,
-                                            TextureType texture_type) {
+std::optional<const char*> get_texture_path(
+	const aiScene* scene, const aiMaterial* material, TextureType texture_type
+) {
 	aiTextureType ai_type = to_ai_texture_type(texture_type);
 	std::cerr << "Material " << material->GetName().C_Str() << ", texture type: " << texture_type
 			  << ", count: " << material->GetTextureCount(ai_type) << std::endl;
@@ -178,8 +209,10 @@ std::optional<const char*> get_texture_path(const aiScene* scene, const aiMateri
 	}
 }
 
-PBROptTex load_texure_opt(ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material,
-                          TextureType type) {
+PBROptTex load_texure_opt(
+	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material,
+	TextureType type
+) {
 	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
 	if (maybe_path) {
 		// has texture
@@ -189,9 +222,10 @@ PBROptTex load_texure_opt(ResourceManager& resource_manager, const std::string& 
 	}
 }
 
-PBRColorTex load_color_texture(ResourceManager& resource_manager, const std::string& directory, const aiScene* scene,
-                               const aiMaterial* material, TextureType type, const char* fallback_matkey,
-                               unsigned fallback_matkey_type, unsigned fallback_matkey_idx) {
+PBRColorTex load_color_texture(
+	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material,
+	TextureType type, const char* fallback_matkey, unsigned fallback_matkey_type, unsigned fallback_matkey_idx
+) {
 	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
 	if (maybe_path) {
 		// has texture
@@ -204,9 +238,10 @@ PBRColorTex load_color_texture(ResourceManager& resource_manager, const std::str
 	}
 }
 
-PBRPropTex load_float_texture(ResourceManager& resource_manager, const std::string& directory, const aiScene* scene,
-                              const aiMaterial* material, TextureType type, const char* fallback_matkey,
-                              unsigned fallback_matkey_type, unsigned fallback_matkey_idx) {
+PBRPropTex load_float_texture(
+	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material,
+	TextureType type, const char* fallback_matkey, unsigned fallback_matkey_type, unsigned fallback_matkey_idx
+) {
 	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
 	if (maybe_path) {
 		// has texture
@@ -219,8 +254,10 @@ PBRPropTex load_float_texture(ResourceManager& resource_manager, const std::stri
 	}
 }
 
-PBRPropTex load_float_texture(ResourceManager& resource_manager, const std::string& directory, const aiScene* scene,
-                              const aiMaterial* material, TextureType type, float fallback) {
+PBRPropTex load_float_texture(
+	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material,
+	TextureType type, float fallback
+) {
 	std::optional<const char*> maybe_path = get_texture_path(scene, material, type);
 	if (maybe_path) {
 		// has texture
@@ -231,8 +268,9 @@ PBRPropTex load_float_texture(ResourceManager& resource_manager, const std::stri
 	}
 }
 
-void transforms_by_node_name_helper(const aiNode* node, const glm::mat4& prev_transform,
-                                    std::map<std::string_view, std::vector<glm::mat4>>& result) {
+void transforms_by_node_name_helper(
+	const aiNode* node, const glm::mat4& prev_transform, std::map<std::string_view, std::vector<glm::mat4>>& result
+) {
 	std::string_view node_name = std::string_view(node->mName.C_Str());
 	glm::mat4 transform = prev_transform * from_ai_mat4(node->mTransformation);
 	if (node_name.size()) {
@@ -292,7 +330,7 @@ std::tuple<std::vector<DirectionalLight>, std::vector<PointLight>> load_lights(c
 	return std::make_tuple(directional_lights, point_lights);
 }
 
-void Model::render(Shader& shader) const  {
+void Model::render(Shader& shader) const {
 	for (const Mesh& mesh : this->meshes) {
 		mesh.render(shader);
 	}

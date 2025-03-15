@@ -2,9 +2,13 @@
 
 #include <iostream>
 
-glm::vec3 from_ai_color3(const aiColor3D& color) { return glm::vec3(color.r, color.g, color.b); }
+glm::vec3 from_ai_color3(const aiColor3D& color) {
+	return glm::vec3(color.r, color.g, color.b);
+}
 
-glm::vec3 from_ai_vec3(const aiVector3D& vec) { return glm::vec3(vec.x, vec.y, vec.z); }
+glm::vec3 from_ai_vec3(const aiVector3D& vec) {
+	return glm::vec3(vec.x, vec.y, vec.z);
+}
 
 glm::mat4 from_ai_mat4(const aiMatrix4x4& mat) {
 	// clang-format off

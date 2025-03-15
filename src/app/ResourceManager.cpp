@@ -13,8 +13,9 @@ std::tuple<std::vector<unsigned char>, int, int> texture_data(const aiTexture* t
 	}
 }
 
-std::shared_ptr<Texture> ResourceManager::load_texture(const aiScene* scene, TextureType type, const char* directory,
-                                                       const char* relative_path) {
+std::shared_ptr<Texture> ResourceManager::load_texture(
+	const aiScene* scene, TextureType type, const char* directory, const char* relative_path
+) {
 	std::string path = std::string(directory) + "/" + relative_path;
 	return this->load_texture(scene, type, path.c_str());
 }
