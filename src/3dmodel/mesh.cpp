@@ -51,69 +51,70 @@ void set_mesh_local_transform(Shader& shader, glm::mat4 local_transform) {
 
 void bind_material(Shader& shader, const PBRMaterial& material) {
 	unsigned slot = 0;
-	if (std::holds_alternative<std::shared_ptr<Texture>>(material.albedo)) {
-		auto tex = std::get<std::shared_ptr<Texture>>(material.albedo);
+	// base color
+	if (material.base_color.has_value()) {
+		auto tex = material.base_color.value();
 		glActiveTexture(GL_TEXTURE0 + slot);
 		glBindTexture(GL_TEXTURE_2D, tex->get_id());
-		shader.setUniformTexture("albedo_map", slot);
-		shader.setUniformBool("use_albedo_map", true);
-		shader.setUniformInt("albedo_uv_channel", material.albedo_uv_channel);
+		shader.setUniformTexture("base_color_texture", slot);
+		shader.setUniformInt("base_color_uv_channel", material.base_color_uv_channel);
+		shader.setUniformBool("has_base_color_texture", true);
 		++slot;
 	} else {
-		auto color = std::get<glm::vec3>(material.albedo);
-		shader.setUniformVec3("albedo_color", color);
-		shader.setUniformBool("use_albedo_map", false);
+		shader.setUniformBool("has_base_color_texture", false);
 	}
+	shader.setUniformVec4("base_color_factor", material.base_color_factor);
+	// normals
 	if (material.normals.has_value()) {
 		auto tex = material.normals.value();
 		glActiveTexture(GL_TEXTURE0 + slot);
 		glBindTexture(GL_TEXTURE_2D, tex->get_id());
-		shader.setUniformTexture("normal_map", slot);
-		shader.setUniformBool("use_normal_map", true);
+		shader.setUniformTexture("normal_texture", slot);
 		shader.setUniformInt("normal_uv_channel", material.normals_uv_channel);
+		shader.setUniformBool("has_normal_texture", true);
 		++slot;
 	} else {
-		shader.setUniformBool("use_normal_map", false);
+		shader.setUniformBool("has_normal_texture", false);
 	}
-	if (std::holds_alternative<std::shared_ptr<Texture>>(material.metallic)) {
-		auto tex = std::get<std::shared_ptr<Texture>>(material.metallic);
+	// metallic
+	if (material.metallic.has_value()) {
+		auto tex = material.metallic.value();
 		glActiveTexture(GL_TEXTURE0 + slot);
 		glBindTexture(GL_TEXTURE_2D, tex->get_id());
-		shader.setUniformTexture("metallic_map", slot);
-		shader.setUniformBool("use_metallic_map", true);
+		shader.setUniformTexture("metallic_texture", slot);
 		shader.setUniformInt("metallic_uv_channel", material.metallic_uv_channel);
+		shader.setUniformBool("has_metallic_texture", true);
 		++slot;
 	} else {
-		float value = std::get<float>(material.metallic);
-		shader.setUniformFloat("metallic_factor", value);
-		shader.setUniformBool("use_metallic_map", false);
+		shader.setUniformBool("has_metallic_texture", false);
 	}
-	if (std::holds_alternative<std::shared_ptr<Texture>>(material.roughness)) {
-		auto tex = std::get<std::shared_ptr<Texture>>(material.roughness);
+	shader.setUniformFloat("metallic_factor", material.metallic_factor);
+	// roughnes
+	if (material.roughness.has_value()) {
+		auto tex = material.roughness.value();
 		glActiveTexture(GL_TEXTURE0 + slot);
 		glBindTexture(GL_TEXTURE_2D, tex->get_id());
-		shader.setUniformTexture("roughness_map", slot);
-		shader.setUniformBool("use_roughness_map", true);
+		shader.setUniformTexture("roughness_texture", slot);
 		shader.setUniformInt("roughness_uv_channel", material.roughness_uv_channel);
+		shader.setUniformBool("has_roughness_texture", true);
 		++slot;
 	} else {
-		float value = std::get<float>(material.roughness);
-		shader.setUniformFloat("roughness_factor", value);
-		shader.setUniformBool("use_roughness_map", false);
+		shader.setUniformBool("has_roughness_texture", false);
 	}
-	if (std::holds_alternative<std::shared_ptr<Texture>>(material.ambient_occlusion)) {
-		auto tex = std::get<std::shared_ptr<Texture>>(material.ambient_occlusion);
+	shader.setUniformFloat("roughness_factor", material.roughness_factor);
+	// ambient occlusion
+	if (material.roughness.has_value()) {
+		auto tex = material.roughness.value();
 		glActiveTexture(GL_TEXTURE0 + slot);
 		glBindTexture(GL_TEXTURE_2D, tex->get_id());
-		shader.setUniformTexture("ambient_occlusion_map", slot);
-		shader.setUniformBool("use_ambient_occlusion_map", true);
+		shader.setUniformTexture("ambient_occlusion_texture", slot);
 		shader.setUniformInt("ao_uv_channel", material.ao_uv_channel);
+		shader.setUniformBool("has_ao_texture", true);
 		++slot;
 	} else {
-		float value = std::get<float>(material.ambient_occlusion);
-		shader.setUniformFloat("ambient_occlusion_factor", value);
-		shader.setUniformBool("use_ambient_occlusion_map", false);
+		shader.setUniformBool("has_ao_texture", false);
 	}
+	shader.setUniformFloat("ao_strength", material.ao_strength);
 }
 
 void Mesh::render(Shader& shader) const {

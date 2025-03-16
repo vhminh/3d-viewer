@@ -3,7 +3,7 @@
 #include "utils/macro.h"
 
 enum TextureType {
-	ALBEDO = 0,
+	BASE_COLOR = 0,
 	NORMALS,
 	METALLIC,
 	ROUGHNESS,
@@ -30,5 +30,5 @@ public:
 
 private:
 	Texture(GLuint id, TextureType type);
-	TextureType type;
+	TextureType type; // FIXME: shouldn't store texture type
 };

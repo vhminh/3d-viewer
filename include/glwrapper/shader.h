@@ -17,6 +17,7 @@ public:
 	void setUniformFloat(const char* name, float value);
 	void setUniformVec3(const char* name, const glm::vec3& value);
 	void setUniformVec3(const char* name, const float* values);
+	void setUniformVec4(const char* name, const glm::vec4& value);
 	void setUniformMat4(const char* name, const glm::mat4& value);
 	void setUniformTexture(const char* name, GLint texture_id);
 

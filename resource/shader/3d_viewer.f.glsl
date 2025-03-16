@@ -12,28 +12,28 @@ in VS_OUT {
 uniform vec3 camera_position;
 
 // material
-uniform sampler2D albedo_map;
-uniform vec3 albedo_color;
-uniform bool use_albedo_map;
-uniform int albedo_uv_channel;
+uniform sampler2D base_color_texture;
+uniform bool has_base_color_texture;
+uniform vec4 base_color_factor;
+uniform int base_color_uv_channel;
 
-uniform sampler2D normal_map;
-uniform bool use_normal_map;
+uniform sampler2D normal_texture;
+uniform bool has_normal_texture;
 uniform int normal_uv_channel;
 
-uniform sampler2D metallic_map;
+uniform sampler2D metallic_texture;
+uniform bool has_metallic_texture;
 uniform float metallic_factor;
-uniform bool use_metallic_map;
 uniform int metallic_uv_channel;
 
-uniform sampler2D roughness_map;
+uniform sampler2D roughness_texture;
+uniform bool has_roughness_texture;
 uniform float roughness_factor;
-uniform bool use_roughness_map;
 uniform int roughness_uv_channel;
 
-uniform sampler2D ambient_occlusion_map;
-uniform float ambient_occlusion_factor;
-uniform bool use_ambient_occlusion_map;
+uniform sampler2D ambient_occlusion_texture;
+uniform bool has_ao_texture;
+uniform float ao_strength;
 uniform int ao_uv_channel;
 
 // lights
@@ -64,17 +64,18 @@ uniform int num_point_lights;
 
 out vec4 f_out;
 
-vec4 get_albedo() {
-	if (use_albedo_map) {
-		return texture(albedo_map, f_in.tex_coords[albedo_uv_channel]);
+// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#_material_pbrmetallicroughness_basecolortexture
+vec4 get_base_color() {
+	if (has_base_color_texture) {
+		return texture(base_color_texture, f_in.tex_coords[base_color_uv_channel]) * base_color_factor;
 	} else {
-		return vec4(albedo_color, 1.0);
+		return vec4(1.0) * base_color_factor;
 	}
 }
 
 vec3 get_normal() {
-	if (use_normal_map) {
-		vec3 normal = texture(normal_map, f_in.tex_coords[normal_uv_channel]).rgb;
+	if (has_normal_texture) {
+		vec3 normal = texture(normal_texture, f_in.tex_coords[normal_uv_channel]).rgb;
 		normal = normal * 2.0 - 1.0;
 		return normalize(f_in.tangent_mat * normal);
 	} else {
@@ -82,27 +83,29 @@ vec3 get_normal() {
 	}
 }
 
+// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#_material_pbrmetallicroughness_metallicroughnesstexture
 float get_metallic()  {
-	if (use_metallic_map) {
-		return texture(metallic_map, f_in.tex_coords[metallic_uv_channel]).b;
+	if (has_metallic_texture) {
+		return texture(metallic_texture, f_in.tex_coords[metallic_uv_channel]).b * metallic_factor;
 	} else {
 		return metallic_factor;
 	}
 }
-
+ 
+// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#_material_pbrmetallicroughness_metallicroughnesstexture
 float get_roughness() {
-	if (use_roughness_map) {
-		return texture(roughness_map, f_in.tex_coords[roughness_uv_channel]).g;
+	if (has_roughness_texture) {
+		return texture(roughness_texture, f_in.tex_coords[roughness_uv_channel]).g * roughness_factor;
 	} else {
 		return roughness_factor;
 	}
 }
 
 float get_ambient_occlusion() {
-	if (use_ambient_occlusion_map) {
-		return texture(ambient_occlusion_map, f_in.tex_coords[ao_uv_channel]).r;
+	if (has_ao_texture) {
+		return texture(ambient_occlusion_texture, f_in.tex_coords[ao_uv_channel]).r;
 	} else {
-		return ambient_occlusion_factor;
+		return 0.0; // no occlusion
 	}
 }
 
@@ -153,7 +156,7 @@ vec3 calculate_light(vec3 albedo, vec3 normal, float metallic, float roughness, 
 void main() {
 	f_out = vec4(0.0);
 	vec3 color = vec3(0.0);
-	vec4 albedo = get_albedo();
+	vec4 albedo = get_base_color();
 	if (albedo.a < 0.1) {
 		discard;
 	}
@@ -172,7 +175,7 @@ void main() {
 		float attenuation = 1.0 / (light.attenuation.constant + light.attenuation.linear * distance + light.attenuation.quadratic * distance * distance);
 		color += calculate_light(vec3(albedo), normal, metallic, roughness, normalize(light_ptr), light.color, attenuation);
 	}
-	vec3 ambient = vec3(0.03) * vec3(albedo) * ao;
-	f_out = vec4(color + ambient, albedo.a);
+	float occlusion = 1.0 + ao_strength * (ao - 1.0);
+	f_out = vec4(color * (1.0 - occlusion), albedo.a);
 }
 

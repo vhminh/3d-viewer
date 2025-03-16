@@ -6,6 +6,10 @@ glm::vec3 from_ai_color3(const aiColor3D& color) {
 	return glm::vec3(color.r, color.g, color.b);
 }
 
+glm::vec4 from_ai_color4(const aiColor4D& color) {
+	return glm::vec4(color.r, color.g, color.b, color.a);
+}
+
 glm::vec3 from_ai_vec3(const aiVector3D& vec) {
 	return glm::vec3(vec.x, vec.y, vec.z);
 }
@@ -23,14 +27,14 @@ glm::mat4 from_ai_mat4(const aiMatrix4x4& mat) {
 
 TextureType from_ai_texture_type(const aiTextureType ai_type) {
 	if (ai_type == aiTextureType_BASE_COLOR) {
-		return TextureType::ALBEDO;
+		return TextureType::BASE_COLOR;
 	} else if (ai_type == aiTextureType_NORMALS) {
 		return TextureType::NORMALS;
 	} else if (ai_type == aiTextureType_METALNESS) {
 		return TextureType::METALLIC;
 	} else if (ai_type == aiTextureType_DIFFUSE_ROUGHNESS) {
 		return TextureType::ROUGHNESS;
-	} else if (ai_type == aiTextureType_AMBIENT_OCCLUSION) {
+	} else if (ai_type == aiTextureType_LIGHTMAP) {
 		return TextureType::AMBIENT_OCCLUSION;
 	}
 	std::cerr << "unsupported assimp texture type " << ai_type << std::endl;
@@ -39,7 +43,7 @@ TextureType from_ai_texture_type(const aiTextureType ai_type) {
 
 aiTextureType to_ai_texture_type(const TextureType type) {
 	switch (type) {
-	case TextureType::ALBEDO:
+	case TextureType::BASE_COLOR:
 		return aiTextureType_BASE_COLOR;
 	case TextureType::NORMALS:
 		return aiTextureType_NORMALS;
@@ -48,7 +52,7 @@ aiTextureType to_ai_texture_type(const TextureType type) {
 	case TextureType::ROUGHNESS:
 		return aiTextureType_DIFFUSE_ROUGHNESS;
 	case TextureType::AMBIENT_OCCLUSION:
-		return aiTextureType_AMBIENT_OCCLUSION;
+		return aiTextureType_LIGHTMAP;
 	case TextureType::COUNT:
 		assert(false);
 	}

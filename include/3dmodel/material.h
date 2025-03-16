@@ -5,27 +5,25 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include <optional>
-#include <variant>
 
-typedef std::optional<std::shared_ptr<Texture>> PBROptTex;
-typedef std::variant<std::shared_ptr<Texture>, glm::vec3> PBRColorTex;
-typedef std::variant<std::shared_ptr<Texture>, float> PBRPropTex;
+typedef std::optional<std::shared_ptr<Texture>> MaybeTexture;
 
 struct PBRMaterial {
-	PBRMaterial(
-		PBRColorTex albedo, PBROptTex normals, PBRPropTex metallic, PBRPropTex roughness, PBRPropTex ambient_occlusion,
-		unsigned albedo_uv_channel, unsigned normals_uv_channel, unsigned metallic_uv_channel,
-		unsigned roughness_uv_channel, unsigned ao_uv_channel
-	);
+	// USE AGGREGATE INIT PLEASE
 
-	PBRColorTex albedo;
-	PBROptTex normals;
-	PBRPropTex metallic;
-	PBRPropTex roughness;
-	PBRPropTex ambient_occlusion;
-	unsigned albedo_uv_channel;
-	unsigned normals_uv_channel;
-	unsigned metallic_uv_channel;
-	unsigned roughness_uv_channel;
-	unsigned ao_uv_channel;
+	const std::optional<std::shared_ptr<Texture>> base_color;
+	const glm::vec4 base_color_factor;
+	const std::optional<std::shared_ptr<Texture>> normals;
+	const std::optional<std::shared_ptr<Texture>> metallic;
+	const float metallic_factor;
+	const std::optional<std::shared_ptr<Texture>> roughness;
+	const float roughness_factor;
+	const std::optional<std::shared_ptr<Texture>> ambient_occlusion;
+	const float ao_strength;
+
+	const unsigned base_color_uv_channel;
+	const unsigned normals_uv_channel;
+	const unsigned metallic_uv_channel;
+	const unsigned roughness_uv_channel;
+	const unsigned ao_uv_channel;
 };

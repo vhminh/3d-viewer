@@ -13,7 +13,7 @@ Texture Texture::create(const char* path, TextureType type, int wrap_s, int wrap
 	stbi_set_flip_vertically_on_load(false);
 	int desired_channel;
 	switch (type) {
-	case ALBEDO:
+	case BASE_COLOR:
 		desired_channel = STBI_rgb_alpha;
 		break;
 	default:
@@ -43,7 +43,7 @@ Texture Texture::create(
 	GLint internal_format;
 	GLenum format;
 	switch (type) {
-	case ALBEDO:
+	case BASE_COLOR:
 		internal_format = GL_SRGB_ALPHA; // convert to linear space
 		format = GL_RGBA;
 		break;

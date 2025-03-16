@@ -24,19 +24,8 @@ Mesh load_mesh(
 // materials
 PBRMaterial load_material(ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*);
 std::optional<const char*> get_texture_path(const aiMaterial*, TextureType);
-PBRColorTex load_color_texture(
-	ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*, TextureType,
-	const char* fallback_matkey, unsigned fallback_matkey_type, unsigned fallback_matkey_idx
-);
-PBROptTex load_texure_opt(
+MaybeTexture load_texure(
 	ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*, TextureType
-);
-PBRPropTex load_float_texture(
-	ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*, TextureType,
-	const char* fallback_matkey, unsigned fallback_matkey_type, unsigned fallback_matkey_idx
-);
-PBRPropTex load_float_texture(
-	ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*, TextureType, float fallback
 );
 
 // lights
@@ -53,6 +42,17 @@ Model::Model(ResourceManager& resource_manager, const char* path) : directory(di
 
 	if (!scene) {
 		throw ModelLoadingError(path, importer.GetErrorString());
+	}
+
+	for (int i = 0; i < scene->mNumMaterials; ++i) {
+		aiMaterial* material = scene->mMaterials[i];
+		for (int t = aiTextureType_NONE; t <= AI_TEXTURE_TYPE_MAX; ++t) {
+			aiTextureType type = aiTextureType(t);
+			if (material->GetTextureCount(type) > 0) {
+				std::cout << "material " << material->GetName().C_Str() << ", texture type " << type << ", count "
+						  << material->GetTextureCount(type) << std::endl;
+			}
+		}
 	}
 
 	std::cout << "lights: " << scene->mNumLights << std::endl;
@@ -157,19 +157,25 @@ std::ostream& operator<<(std::ostream& os, const aiColor3D& color) {
 PBRMaterial load_material(
 	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material
 ) {
-	PBRColorTex albedo =
-		load_color_texture(resource_manager, directory, scene, material, TextureType::ALBEDO, AI_MATKEY_BASE_COLOR);
-	PBROptTex normals = load_texure_opt(resource_manager, directory, scene, material, TextureType::NORMALS);
-	PBRPropTex metallic = load_float_texture(
-		resource_manager, directory, scene, material, TextureType::METALLIC, AI_MATKEY_METALLIC_FACTOR
-	);
-	PBRPropTex roughness = load_float_texture(
-		resource_manager, directory, scene, material, TextureType::ROUGHNESS, AI_MATKEY_ROUGHNESS_FACTOR
-	);
-	PBRPropTex ambient_occlusion =
-		load_float_texture(resource_manager, directory, scene, material, TextureType::AMBIENT_OCCLUSION, 1.0);
-	unsigned albedo_uv_channel = 0;
-	material->Get(AI_MATKEY_UVWSRC(aiTextureType_BASE_COLOR, 0), albedo_uv_channel);
+	MaybeTexture base_color = load_texure(resource_manager, directory, scene, material, TextureType::BASE_COLOR);
+	MaybeTexture normals = load_texure(resource_manager, directory, scene, material, TextureType::NORMALS);
+	MaybeTexture metallic = load_texure(resource_manager, directory, scene, material, TextureType::METALLIC);
+	MaybeTexture roughness = load_texure(resource_manager, directory, scene, material, TextureType::ROUGHNESS);
+	MaybeTexture ambient_occlusion =
+		load_texure(resource_manager, directory, scene, material, TextureType::AMBIENT_OCCLUSION);
+
+	aiColor4D base_color_factor = aiColor4D(1.0);
+	assert(aiReturn_SUCCESS == material->Get(AI_MATKEY_BASE_COLOR, base_color_factor));
+	// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#_material_pbrmetallicroughness_metallicfactor
+	float metallic_factor = 1.0;
+	material->Get(AI_MATKEY_METALLIC_FACTOR, metallic_factor);
+	// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#_material_pbrmetallicroughness_roughnessfactor
+	float roughness_factor = 1.0;
+	material->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness_factor);
+	float ao_strength = 1.0; // FIXME: this is in gltf specific section in assimp
+
+	unsigned base_color_uv_channel = 0;
+	material->Get(AI_MATKEY_UVWSRC(aiTextureType_BASE_COLOR, 0), base_color_uv_channel);
 	unsigned normals_uv_channel = 0;
 	material->Get(AI_MATKEY_UVWSRC(aiTextureType_NORMALS, 0), normals_uv_channel);
 	unsigned metallic_uv_channel = 0;
@@ -177,20 +183,25 @@ PBRMaterial load_material(
 	unsigned roughness_uv_channel = 0;
 	material->Get(AI_MATKEY_UVWSRC(aiTextureType_DIFFUSE_ROUGHNESS, 0), roughness_uv_channel);
 	unsigned ao_uv_channel = 0;
+	// FIXME: AMBIENT_OCCLUSION or LIGHT_MAP ???
 	material->Get(AI_MATKEY_UVWSRC(aiTextureType_AMBIENT_OCCLUSION, 0), ao_uv_channel);
 
-	return PBRMaterial(
-		albedo,
-		normals,
-		metallic,
-		roughness,
-		ambient_occlusion,
-		albedo_uv_channel,
-		normals_uv_channel,
-		metallic_uv_channel,
-		roughness_uv_channel,
-		ao_uv_channel
-	);
+	return PBRMaterial{
+		.base_color = base_color,
+		.base_color_factor = from_ai_color4(base_color_factor),
+		.normals = normals,
+		.metallic = metallic,
+		.metallic_factor = metallic_factor,
+		.roughness = roughness,
+		.roughness_factor = roughness_factor,
+		.ambient_occlusion = ambient_occlusion,
+		.ao_strength = ao_strength,
+		.base_color_uv_channel = base_color_uv_channel,
+		.normals_uv_channel = normals_uv_channel,
+		.metallic_uv_channel = metallic_uv_channel,
+		.roughness_uv_channel = roughness_uv_channel,
+		.ao_uv_channel = ao_uv_channel
+	};
 }
 
 std::optional<const char*> get_texture_path(const aiMaterial* material, TextureType texture_type) {
@@ -207,7 +218,7 @@ std::optional<const char*> get_texture_path(const aiMaterial* material, TextureT
 	}
 }
 
-PBROptTex load_texure_opt(
+MaybeTexture load_texure(
 	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material,
 	TextureType type
 ) {
@@ -217,52 +228,6 @@ PBROptTex load_texure_opt(
 		return resource_manager.load_texture(scene, type, directory.c_str(), maybe_path.value());
 	} else {
 		return std::nullopt;
-	}
-}
-
-PBRColorTex load_color_texture(
-	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material,
-	TextureType type, const char* fallback_matkey, unsigned fallback_matkey_type, unsigned fallback_matkey_idx
-) {
-	std::optional<const char*> maybe_path = get_texture_path(material, type);
-	if (maybe_path) {
-		// has texture
-		return resource_manager.load_texture(scene, type, directory.c_str(), maybe_path.value());
-	} else {
-		// fallback color
-		aiColor3D color;
-		assert(aiReturn_SUCCESS == material->Get(fallback_matkey, fallback_matkey_type, fallback_matkey_idx, color));
-		return from_ai_color3(color);
-	}
-}
-
-PBRPropTex load_float_texture(
-	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material,
-	TextureType type, const char* fallback_matkey, unsigned fallback_matkey_type, unsigned fallback_matkey_idx
-) {
-	std::optional<const char*> maybe_path = get_texture_path(material, type);
-	if (maybe_path) {
-		// has texture
-		return resource_manager.load_texture(scene, type, directory.c_str(), maybe_path.value());
-	} else {
-		// fallback value
-		float value;
-		assert(aiReturn_SUCCESS == material->Get(fallback_matkey, fallback_matkey_type, fallback_matkey_idx, value));
-		return value;
-	}
-}
-
-PBRPropTex load_float_texture(
-	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material,
-	TextureType type, float fallback
-) {
-	std::optional<const char*> maybe_path = get_texture_path(material, type);
-	if (maybe_path) {
-		// has texture
-		return resource_manager.load_texture(scene, type, directory.c_str(), maybe_path.value());
-	} else {
-		// fallback value
-		return fallback;
 	}
 }
 

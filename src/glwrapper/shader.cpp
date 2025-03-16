@@ -122,6 +122,11 @@ void Shader::setUniformVec3(const char* name, const float* values) {
 	glUniform3fv(loc, 1, values);
 }
 
+void Shader::setUniformVec4(const char* name, const glm::vec4& value) {
+	GLint loc = glGetUniformLocation(id, name);
+	glUniform4fv(loc, 1, glm::value_ptr(value));
+}
+
 void Shader::setUniformMat4(const char* name, const glm::mat4& value) {
 	GLint loc = glGetUniformLocation(id, name);
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(value));

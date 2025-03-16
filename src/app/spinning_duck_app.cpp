@@ -12,8 +12,8 @@ SpinningDuckApp::SpinningDuckApp(const char* title, int width, int height) :
 	App(title, width, height), camera(glm::vec3(0.0f, 1.0f, 1.0f), 0.0, 0.0),
 	shader(Shader::create("resource/shader/spinning_duck.v.glsl", "resource/shader/spinning_duck.f.glsl")),
 	light_shader(Shader::create("resource/shader/spinning_duck.v.glsl", "resource/shader/white.f.glsl")),
-	duck(Texture::create("resource/texture/duck.jpg", TextureType::ALBEDO)),
-	grass(Texture::create("resource/texture/grass.png", TextureType::ALBEDO)) {
+	duck(Texture::create("resource/texture/duck.jpg", TextureType::BASE_COLOR)),
+	grass(Texture::create("resource/texture/grass.png", TextureType::BASE_COLOR)) {
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
