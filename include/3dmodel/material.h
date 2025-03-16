@@ -13,6 +13,7 @@ struct PBRMaterial {
 
 	const std::optional<std::shared_ptr<Texture>> base_color;
 	const glm::vec4 base_color_factor;
+	const float opacity;
 	const std::optional<std::shared_ptr<Texture>> normals;
 	const std::optional<std::shared_ptr<Texture>> metallic;
 	const float metallic_factor;

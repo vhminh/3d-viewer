@@ -1,9 +1,9 @@
 #include "3dmodel/model.h"
 
+#include "3dmodel/material.h"
 #include "3dmodel/utils/assimp_conversions.h"
 #include "app/config.h"
 #include "assimp/Importer.hpp"
-#include "assimp/light.h"
 #include "assimp/material.h"
 #include "assimp/types.h"
 #include "utils/error.h"
@@ -14,6 +14,8 @@
 #include <assimp/scene.h>
 #include <iostream>
 #include <stack>
+
+#define OPAQUE_THRESHOLD 0.9
 
 // meshes
 std::vector<Mesh> load_meshes(ResourceManager&, const std::string& directory, const aiScene*);
@@ -66,6 +68,15 @@ Model::Model(ResourceManager& resource_manager, const char* path) : directory(di
 	std::tie(this->directional_lights, this->point_lights) = load_lights(scene);
 	assert(this->directional_lights.size() <= MAX_NUM_DIRECTIONAL_LIGHTS);
 	assert(this->point_lights.size() <= MAX_NUM_POINT_LIGHTS);
+
+	/* // partition into opaque and semi-transparent meshes */
+	/* for (Mesh& mesh : this->meshes) { */
+	/* 	if (mesh.get_material().opacity < 0.9) { */
+	/* 		this->semi_transparent_meshes.push_back(&mesh); */
+	/* 	} else { */
+	/* 		this->opaque_meshes.push_back(&mesh); */
+	/* 	} */
+	/* } */
 }
 
 Model::Model(Model&& another) : directory(another.directory) {
@@ -164,6 +175,8 @@ PBRMaterial load_material(
 	MaybeTexture ambient_occlusion =
 		load_texure(resource_manager, directory, scene, material, TextureType::AMBIENT_OCCLUSION);
 
+	float opacity;
+	assert(aiReturn_SUCCESS == material->Get(AI_MATKEY_OPACITY, opacity));
 	aiColor4D base_color_factor = aiColor4D(1.0);
 	assert(aiReturn_SUCCESS == material->Get(AI_MATKEY_BASE_COLOR, base_color_factor));
 	// https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#_material_pbrmetallicroughness_metallicfactor
@@ -189,6 +202,7 @@ PBRMaterial load_material(
 	return PBRMaterial{
 		.base_color = base_color,
 		.base_color_factor = from_ai_color4(base_color_factor),
+		.opacity = opacity,
 		.normals = normals,
 		.metallic = metallic,
 		.metallic_factor = metallic_factor,
@@ -293,8 +307,18 @@ std::tuple<std::vector<DirectionalLight>, std::vector<PointLight>> load_lights(c
 	return std::make_tuple(directional_lights, point_lights);
 }
 
-void Model::render(Shader& shader) const {
+void Model::render_opaque_meshes(Shader& shader) const {
 	for (const Mesh& mesh : this->meshes) {
-		mesh.render(shader);
+		if (mesh.get_material().opacity >= OPAQUE_THRESHOLD) {
+			mesh.render(shader);
+		}
+	}
+}
+
+void Model::render_semi_transparent_meshes(Shader& shader) const {
+	for (const Mesh& mesh : this->meshes) {
+		if (mesh.get_material().opacity < OPAQUE_THRESHOLD) {
+			mesh.render(shader);
+		}
 	}
 }

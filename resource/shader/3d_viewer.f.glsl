@@ -157,9 +157,9 @@ void main() {
 	f_out = vec4(0.0);
 	vec3 color = vec3(0.0);
 	vec4 albedo = get_base_color();
-	if (albedo.a < 0.1) {
-		discard;
-	}
+	// if (albedo.a < 0.1) {
+	// 	discard;
+	// }
 	vec3 normal = get_normal();
 	float metallic = get_metallic();
 	float roughness = get_roughness();

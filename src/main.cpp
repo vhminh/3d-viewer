@@ -17,6 +17,7 @@ int main() {
 		"3D viewer",
 		DEFAULT_WINDOW_WIDTH,
 		DEFAULT_WINDOW_HEIGHT,
+		/* {"/home/minh/Downloads/intel_sponza_downscaled/main1_sponza/NewSponza_Main_glTF_003.gltf"} */
 		{"/home/minh/Downloads/intel_sponza_downscaled/main1_sponza/NewSponza_Main_glTF_003.gltf",
 	     "/home/minh/Downloads/intel_sponza_downscaled/main1_sponza/NewSponza_Curtains_glTF.gltf"}
 	);

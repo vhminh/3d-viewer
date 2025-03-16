@@ -72,7 +72,16 @@ void Scene::render(Shader& shader, const Camera& camera) const {
 
 	set_light_uniforms(shader, directional_lights, point_lights);
 	set_camera_view_transforms(shader, camera);
+
+	glEnable(GL_BLEND);
+
+	glBlendFunc(GL_ONE, GL_ZERO);
 	for (const Model& model : this->models) {
-		model.render(shader);
+		model.render_opaque_meshes(shader);
+	}
+	// TODO: check blend mode?
+	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	for (const Model& model : this->models) {
+		model.render_semi_transparent_meshes(shader);
 	}
 }

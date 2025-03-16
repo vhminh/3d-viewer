@@ -117,6 +117,10 @@ void bind_material(Shader& shader, const PBRMaterial& material) {
 	shader.setUniformFloat("ao_strength", material.ao_strength);
 }
 
+const PBRMaterial& Mesh::get_material() const {
+	return material;
+}
+
 void Mesh::render(Shader& shader) const {
 	set_mesh_local_transform(shader, transform);
 	bind_material(shader, material);

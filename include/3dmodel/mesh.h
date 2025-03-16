@@ -1,6 +1,5 @@
 #pragma once
 
-#include "3dmodel/light.h"
 #include "3dmodel/material.h"
 #include "3dmodel/vertex.h"
 #include "gl.h"
@@ -17,6 +16,7 @@ public:
 	NO_COPY(Mesh);
 	MOVE(Mesh);
 
+	const PBRMaterial& get_material() const;
 	void render(Shader& shader) const;
 
 private:
