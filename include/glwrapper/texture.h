@@ -12,23 +12,28 @@ enum TextureType {
 	COUNT,
 };
 
+enum TextureFormat {
+	RGB = 1,
+	SRGB,
+	RGBA,
+	SRGBA,
+};
+
 class Texture : public GLObject {
 public:
 	NO_COPY(Texture);
 	MOVE(Texture);
 	static Texture create(
-		const char* path, TextureType type, int wrap_s = GL_REPEAT, int wrap_t = GL_REPEAT, int min_filter = GL_LINEAR,
-		int mag_filter = GL_LINEAR
+		const char* path, TextureFormat format, int wrap_s = GL_REPEAT, int wrap_t = GL_REPEAT,
+		int min_filter = GL_LINEAR, int mag_filter = GL_LINEAR
 	);
 	static Texture create(
-		unsigned char* data, int w, int h, TextureType type, int wrap_s = GL_REPEAT, int wrap_t = GL_REPEAT,
+		unsigned char* data, int w, int h, TextureFormat format, int wrap_s = GL_REPEAT, int wrap_t = GL_REPEAT,
 		int min_filter = GL_LINEAR, int mag_filter = GL_LINEAR
 	);
 	virtual ~Texture();
 
-	TextureType get_type() const;
-
 private:
-	Texture(GLuint id, TextureType type);
-	TextureType type; // FIXME: shouldn't store texture type
+	Texture(GLuint id, TextureFormat type);
+	TextureFormat format;
 };

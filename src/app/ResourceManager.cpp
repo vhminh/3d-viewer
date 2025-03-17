@@ -14,28 +14,28 @@ std::tuple<std::vector<unsigned char>, int, int> texture_data(const aiTexture* t
 }
 
 std::shared_ptr<Texture> ResourceManager::load_texture(
-	const aiScene* scene, TextureType type, const char* directory, const char* relative_path
+	const aiScene* scene, TextureFormat format, const char* directory, const char* relative_path
 ) {
 	std::string path = std::string(directory) + "/" + relative_path;
-	return this->load_texture(scene, type, path.c_str());
+	return this->load_texture(scene, format, path.c_str());
 }
 
-std::shared_ptr<Texture> ResourceManager::load_texture(const aiScene* scene, TextureType type, const char* path) {
-	if (texture_by_path.contains(path)) {
-		return texture_by_path.at(path);
+std::shared_ptr<Texture> ResourceManager::load_texture(const aiScene* scene, TextureFormat format, const char* path) {
+	const auto key = std::make_tuple(std::string(path), format);
+	if (texture_by_path.contains(key)) {
+		return texture_by_path.at(key);
 	}
-	std::cerr << "load texture " << type << " " << path << std::endl;
 	const aiTexture* embedded_texture = scene->GetEmbeddedTexture(path);
 	if (embedded_texture) {
 		auto [data, w, h] = texture_data(embedded_texture);
-		std::shared_ptr<Texture> ptr = std::make_shared<Texture>(Texture::create(data.data(), w, h, type));
+		std::shared_ptr<Texture> ptr = std::make_shared<Texture>(Texture::create(data.data(), w, h, format));
 		this->textures.push_back(ptr);
-		texture_by_path[path] = ptr;
+		texture_by_path[key] = ptr;
 		return ptr;
 	} else {
-		std::shared_ptr<Texture> ptr = std::make_shared<Texture>(Texture::create(path, type));
+		std::shared_ptr<Texture> ptr = std::make_shared<Texture>(Texture::create(path, format));
 		this->textures.push_back(ptr);
-		texture_by_path[path] = ptr;
+		texture_by_path[key] = ptr;
 		return ptr;
 	}
 }

@@ -13,11 +13,11 @@ public:
 	NO_MOVE(ResourceManager);
 
 	std::shared_ptr<Texture> load_texture(
-		const aiScene* scene, TextureType type, const char* directory, const char* relative_path
+		const aiScene* scene, TextureFormat format, const char* directory, const char* relative_path
 	);
-	std::shared_ptr<Texture> load_texture(const aiScene* scene, TextureType type, const char* path);
+	std::shared_ptr<Texture> load_texture(const aiScene* scene, TextureFormat format, const char* path);
 
 private:
 	std::vector<std::shared_ptr<Texture>> textures; // TODO: can hold `Texture`s in place
-	std::map<std::string, std::shared_ptr<Texture>> texture_by_path;
+	std::map<std::tuple<std::string, TextureFormat>, std::shared_ptr<Texture>> texture_by_path;
 };

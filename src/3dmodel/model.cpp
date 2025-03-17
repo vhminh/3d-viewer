@@ -27,7 +27,7 @@ Mesh load_mesh(
 PBRMaterial load_material(ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*);
 std::optional<const char*> get_texture_path(const aiMaterial*, TextureType);
 MaybeTexture load_texure(
-	ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*, TextureType
+	ResourceManager&, const std::string& directory, const aiScene*, const aiMaterial*, TextureType, TextureFormat
 );
 
 // lights
@@ -168,12 +168,16 @@ std::ostream& operator<<(std::ostream& os, const aiColor3D& color) {
 PBRMaterial load_material(
 	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material
 ) {
-	MaybeTexture base_color = load_texure(resource_manager, directory, scene, material, TextureType::BASE_COLOR);
-	MaybeTexture normals = load_texure(resource_manager, directory, scene, material, TextureType::NORMALS);
-	MaybeTexture metallic = load_texure(resource_manager, directory, scene, material, TextureType::METALLIC);
-	MaybeTexture roughness = load_texure(resource_manager, directory, scene, material, TextureType::ROUGHNESS);
+	MaybeTexture base_color =
+		load_texure(resource_manager, directory, scene, material, TextureType::BASE_COLOR, TextureFormat::SRGBA);
+	MaybeTexture normals =
+		load_texure(resource_manager, directory, scene, material, TextureType::NORMALS, TextureFormat::RGB);
+	MaybeTexture metallic =
+		load_texure(resource_manager, directory, scene, material, TextureType::METALLIC, TextureFormat::RGB);
+	MaybeTexture roughness =
+		load_texure(resource_manager, directory, scene, material, TextureType::ROUGHNESS, TextureFormat::RGB);
 	MaybeTexture ambient_occlusion =
-		load_texure(resource_manager, directory, scene, material, TextureType::AMBIENT_OCCLUSION);
+		load_texure(resource_manager, directory, scene, material, TextureType::AMBIENT_OCCLUSION, TextureFormat::RGB);
 
 	float opacity;
 	assert(aiReturn_SUCCESS == material->Get(AI_MATKEY_OPACITY, opacity));
@@ -234,12 +238,12 @@ std::optional<const char*> get_texture_path(const aiMaterial* material, TextureT
 
 MaybeTexture load_texure(
 	ResourceManager& resource_manager, const std::string& directory, const aiScene* scene, const aiMaterial* material,
-	TextureType type
+	TextureType type, TextureFormat format
 ) {
 	std::optional<const char*> maybe_path = get_texture_path(material, type);
 	if (maybe_path) {
 		// has texture
-		return resource_manager.load_texture(scene, type, directory.c_str(), maybe_path.value());
+		return resource_manager.load_texture(scene, format, directory.c_str(), maybe_path.value());
 	} else {
 		return std::nullopt;
 	}
