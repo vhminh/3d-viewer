@@ -132,10 +132,15 @@ Mesh load_mesh(
 				tex_coords[j] = glm::vec2(0.0, 0.0);
 			}
 		}
+		glm::vec3 tangent, bitangent;
+		if (mesh->mTangents) {
+			tangent = from_ai_vec3(mesh->mTangents[i]);
+			bitangent = from_ai_vec3(mesh->mBitangents[i]);
+		}
 		vertices.emplace_back(
 			from_ai_vec3(mesh->mVertices[i]),
-			glm::normalize(from_ai_vec3(mesh->mTangents[i])),
-			glm::normalize(from_ai_vec3(mesh->mBitangents[i])),
+			glm::normalize(tangent),
+			glm::normalize(bitangent),
 			glm::normalize(from_ai_vec3(mesh->mNormals[i])),
 			tex_coords
 		);
